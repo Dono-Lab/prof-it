@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prof-IT</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <meta name="Content-Type" content="UTF-8">
+    <meta name="Content-Language" content="fr">
+    <meta name="Description"
+        content="Prof-it est un espace ou les professeurs les plus compétent ont la chance de rencontrer leur éleves qui suivrons leur pas pour la démarche quotidienne d'étre de plus en plus sage.">
+    <meta name="Keywords"
+        content="cours, soutiens, tutorat, professeur, matiere, anglais, français, math, physique,ecole, etudiant,lycéens,collégiens,etude supérieur">
+    <meta name="Subject" content="Cours particulier">
+    <meta name="Revisit-After" content="30 days">
+    <meta name="Robots" content="all">
+    <meta name="Rating" content="general">
+    <meta name="Distribution" content="global">
+    <meta name="Category" content="software">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="../assets/css/home.css">
+</head>
+
+<body>
+    <header>
+        <div id="user-welcome"
+            style="display: none; background: #7494ec; color: white; padding: 15px; text-align: center;">
+            <div class="container">
+                <span>Bienvenue <strong id="welcome-name"></strong> !</span>
+                <a href="/auth/logout.php"
+                    style="color: white; margin-left: 20px; text-decoration: underline;">Déconnexion</a>
+            </div>
+        </div>
+        <div class="container">
+            <div class="header-content">
+                <div class="logo">
+                    <span>
+                        <a href="#"><img id="logo" src="../assets/img/prof_it_logo_blanc.png"></a>
+                    </span>
+                </div>
+                <div class="auth-buttons">
+                    <a href="../auth/auth.php" class="btn btn-login">Connexion</a>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <section class="hero">
+        <div class="container">
+            <h1>Trouvez le bon Prof, Au bon moment</h1>
+            <p>Une plateforme de Study Dating pour vous</p>
+            <section class="search-section">
+                <div class="search-container">
+                    <h2 class="search-title">Que cherchez-vous ?</h2>
+                    <div class="search-bar">
+                        <input type="text" class="search-input" placeholder="Chercher un cours, un professeur...">
+                        <button class="search-button">Chercher</button>
+                    </div>
+                </div>
+            </section>
+            <section class="search-results" style="display: none;">
+                <div class="container">
+                    <h2 class="search-title">Résultats de votre recherche</h2>
+                    <div id="results-container" class="results-grid">
+                    </div>
+                </div>
+            </section>
+        </div>
+    </section>
+
+
+    <section class="features">
+
+        <section class="features">
+            <div class="container">
+                <div class="section-title">
+                    <h2>Trouvez facilement un prof près de chez vous</h2>
+                    <section style="margin-top:20px;">
+                        <div id="map"
+                            style="height: 400px; border-radius: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.1);"></div>
+                    </section>
+                </div>
+            </div>
+        </section>
+    </section>
+    </div>
+    </div>
+    </section>
+
+
+    <section class="testimonials">
+        <div class="container">
+            <div class="section-title">
+                <h2>Ils nous font confiance</h2>
+                <p>Découvrez les témoignages de nos professeurs et nos étudiants</p>
+            </div>
+            <div class="testimonials-grid">
+                <div class="testimonial-card">
+                    <p class="testimonial-text">"Prof-it est simple à l'utilisation, Je programme toutes mes séances
+                        facilement"</p>
+                    <div class="testimonial-author">
+                        <div class="author-avatar">
+                            <img src="https://randomuser.me/api/portraits/women/65.jpg" alt="Marie Dupont">
+                        </div>
+                        <div class="author-info">
+                            <h4>Marie Dupont</h4>
+                            <p>Professeur - Anglais</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="testimonial-card">
+                    <p class="testimonial-text">"J'ai trouvé de l'aide en seulement 5 minutes!! Merci Prof-it pour mon
+                        prof trop cool"</p>
+                    <div class="testimonial-author">
+                        <div class="author-avatar">
+                            <img src="https://randomuser.me/api/portraits/men/32.jpg" alt="Pierre Martin">
+                        </div>
+                        <div class="author-info">
+                            <h4>Pierre Martin</h4>
+                            <p>Etudiant - BTS Technologie 2eme Année</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="testimonial-card">
+                    <p class="testimonial-text">"La meilleure chose que j'ai découvert. Je recommande vivement !"</p>
+                    <div class="testimonial-author">
+                        <div class="author-avatar">
+                            <img src="https://randomuser.me/api/portraits/women/45.jpg" alt="Sophie Leroy">
+                        </div>
+                        <div class="author-info">
+                            <h4>Sophie Leroy</h4>
+                            <p>Etudiant - Masters 1ere Année</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="newsletter">
+        <div class="container">
+            <h2>Restez informé</h2>
+            <p>Abonnez-vous à notre newsletter pour recevoir nos actualités et conseils exclusifs.</p>
+            <form class="newsletter-form" action="../handlers/newsletter_subscribe.php" method="POST">
+                <input type="email" name="email" placeholder="Votre adresse email" required>
+                <button type="submit">S'abonner</button>
+            </form>
+        </div>
+    </section>
+
+    <footer>
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-column">
+                    <h3>Prof-IT</h3>
+                    <p>Nous aidons les étudiants à trouver un professeur selon leur besoin en quelques clics</p>
+                </div>
+                <div class="footer-column">
+                    <h3>Liens rapides</h3>
+                    <ul>
+                        <li><a href="#">Trouver un prof</a></li>
+                        <li><a href="#">Prendre rendez-vous</a></li>
+                    </ul>
+                </div>
+                <div class="footer-column">
+                    <h3>Services</h3>
+                    <ul>
+                        <li><a href="#">Prise de rendez-vous en ligne</a></li>
+                        <li><a href="#">Factures</a></li>
+                    </ul>
+                </div>
+                <div class="footer-column">
+                    <h3>Contact</h3>
+                    <ul>
+                        <li>
+                            <i class="fas fa-map-marker-alt"></i>
+                            <a
+                                href="https://www.google.fr/maps/place/242+Rue+du+Faubourg+Saint-Antoine,+75012+Paris/@48.8491595,2.3871218,17z/data=!3m1!4b1!4m6!3m5!1s0x47e6727347acc2f9:0xf05c1e2443d19a9e!8m2!3d48.8491595!4d2.3896967!16s%2Fg%2F11nnkxvhf5?entry=ttu&g_ep=EgoyMDI1MTExMS4wIKXMDSoASAFQAw%3D%3D">242
+                                Rue Faubourg - 75012, Paris</a>
+                        </li>
+                        <li>
+                            <i class="fas fa-phone"></i>
+                            <a href="tel:+33762229724">+33 7 62 22 97 24</a>
+                        </li>
+                        <li>
+                            <i class="fas fa-envelope"></i>
+                            <a href="mailto:support@prof-it.fr">support@prof-it.fr</a>
+                        </li>
+                    </ul>
+                    <div class="social-links">
+                        <a href="https://www.facebook.com/profile.php?id=61581632294920"><i
+                                class="fab fa-facebook-f"></i></a>
+                        <a href="https://www.instagram.com/profi_t2025/"><i class="fab fa-instagram"></i></a>
+                        <a href="#"><i class="fab fa-linkedin-in"></i></a>
+                    </div>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2023 MonSite. Tous droits réservés.</p>
+            </div>
+        </div>
+    </footer>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="../assets/js/index.js"></script>
+
+</body>
+
+</html>

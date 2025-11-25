@@ -1,0 +1,380 @@
+:root {
+    --primary-color: #1898e9;
+    --secondary-color: #152154;
+    --light-color: #f8f6f6;
+    --dark-color: #69838e;
+    --success-color: #28a745;
+    --warning-color: #ffc107;
+    --danger-color: #dc3545;
+    --border-color: #f8f6f6;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+body {
+    background-color: #f8f9fa;
+    color: #333;
+    line-height: 1.6;
+}
+
+header {
+    background: linear-gradient(135deg, #2c3e50, #152154);
+    color: white;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.header-content {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    min-height: 60px;
+    padding: 10px 0;
+}
+
+.logo {
+    flex-shrink: 0;
+}
+
+#logo {
+    max-width: 80px;
+    height: auto;
+}
+
+nav {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+nav ul {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 2rem;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+nav ul li a {
+    color: white;
+    text-decoration: none;
+    font-weight: 500;
+    padding: 10px 15px;
+    transition: color 0.3s;
+    border-radius: 4px;
+    font-size: clamp(12px, 1.5vw, 18px);
+    white-space: nowrap;
+}
+
+nav ul li a:hover {
+    color: #1898e9;
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+.welcome-section {
+    background: linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.7)), url('https://images.unsplash.com/photo-1497215728101-856f4ea42174?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1170&q=80') no-repeat center center/cover;
+    color: white;
+    padding: 4rem 0;
+    text-align: center;
+}
+
+.welcome-section h1 {
+    font-size: 2.5rem;
+    margin-bottom: 1rem;
+}
+
+.welcome-section h1 span {
+    color: #1898e9;
+}
+
+.welcome-section .lead {
+    font-size: 1.2rem;
+    opacity: 0.9;
+}
+.auth-buttons {
+    display: flex;
+    gap: 15px;
+    align-items: center;
+}
+
+.btn {
+    padding: 8px 20px;
+    border-radius: 4px;
+    text-decoration: none;
+    font-weight: 500;
+    transition: all 0.3s;
+    font-size: clamp(14px, 1vw, 1.5vw);
+}
+
+.btn-logout {
+    color: white;
+    border: 1px solid #1898e9;
+}
+
+.btn-logout:hover {
+    background-color: #1898e9;
+}
+
+.btn-signup {
+    background-color: #1898e9;
+    color: white;
+    border: 1px solid #1898e9;
+}
+
+.btn-signup:hover {
+    background-color: #2980b9;
+    border-color: #2980b9;
+}
+
+.card {
+    border: none;
+    border-radius: 12px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+    transition: transform 0.3s, box-shadow 0.3s;
+    height: 100%;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+}
+
+.card-body {
+    padding: 2rem;
+}
+
+.card-title {
+    color: #2c3e50;
+    font-weight: 600;
+    margin-bottom: 1rem;
+}
+
+.card-text {
+    color: #7f8c8d;
+}
+
+.fa-3x {
+    font-size: 3rem;
+}
+
+.text-primary { color: #1898e9 !important; }
+.text-success { color: #28a745 !important; }
+.text-warning { color: #ffc107 !important; }
+
+#user-welcome {
+    background: #7494ec !important;
+    color: white;
+    padding: 15px;
+    text-align: center;
+}
+
+#user-welcome a {
+    color: white;
+    margin-left: 20px;
+    text-decoration: underline;
+}
+
+#user-welcome a:hover {
+    color: #e8f4ff;
+}
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 20px;
+}
+
+@media (max-width: 768px) {
+    .header-content {
+        flex-direction: column;
+        text-align: center;
+        gap: 15px;
+    }
+
+    nav {
+        position: static;
+        transform: none;
+        width: 100%;
+    }
+
+    nav ul {
+        gap: 1rem;
+        flex-wrap: wrap;
+    }
+
+    nav ul li a {
+        font-size: 14px;
+        padding: 8px 12px;
+    }
+
+    #logo {
+        max-width: 60px;
+    }
+
+    .welcome-section h1 {
+        font-size: 2rem;
+    }
+
+    .welcome-section {
+        padding: 3rem 0;
+    }
+}
+
+@media (max-width: 1024px) and (min-width: 769px) {
+    #logo {
+        max-width: 70px;
+    }
+
+    nav ul {
+        gap: 1.5rem;
+    }
+    
+    nav ul li a {
+        font-size: 16px;
+    }
+}
+        calendar-container {
+            background: white;
+            border-radius: 12px;
+            padding: 2rem;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+            margin-bottom: 2rem;
+        }
+        
+        .appointment-card {
+            background: white;
+            border-radius: 10px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
+            border-left: 4px solid #1898e9;
+        }
+        
+        .appointment-status {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+        
+        .status-confirmed {
+            background: #d4edda;
+            color: #155724;
+        }
+        
+        .status-pending {
+            background: #fff3cd;
+            color: #856404;
+        }
+        
+        .status-cancelled {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        
+        .time-slot {
+            background: #f8f9fa;
+            border: 2px dashed #dee2e6;
+            border-radius: 8px;
+            padding: 1rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .time-slot:hover {
+            background: #e9ecef;
+            border-color: #1898e9;
+        }
+        
+        .time-slot.selected {
+            background: #1898e9;
+            color: white;
+            border-color: #1898e9;
+        }
+
+        .documents-container {
+            background: white;
+            border-radius: 12px;
+            padding: 2rem;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+            margin-bottom: 2rem;
+        }
+        
+        .document-card {
+            background: white;
+            border-radius: 10px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
+            border-left: 4px solid #1898e9;
+            transition: transform 0.3s;
+        }
+        
+        .document-card:hover {
+            transform: translateY(-2px);
+        }
+        
+        .document-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            margin-right: 1rem;
+        }
+        
+        .icon-pdf { background: #ff6b6b; color: white; }
+        .icon-word { background: #2b579a; color: white; }
+        .icon-excel { background: #217346; color: white; }
+        .icon-powerpoint { background: #d24726; color: white; }
+        .icon-image { background: #9b59b6; color: white; }
+        
+        .document-actions {
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        
+        .document-card:hover .document-actions {
+            opacity: 1;
+        }
+        
+        .upload-area {
+            border: 2px dashed #dee2e6;
+            border-radius: 10px;
+            padding: 3rem;
+            text-align: center;
+            background: #f8f9fa;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .upload-area:hover {
+            border-color: #1898e9;
+            background: #e3f2fd;
+        }
+        
+        .folder-card {
+            background: white;
+            border-radius: 10px;
+            padding: 1.5rem;
+            text-align: center;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
+            transition: transform 0.3s;
+            cursor: pointer;
+        }
+        
+        .folder-card:hover {
+            transform: translateY(-3px);
+        }
