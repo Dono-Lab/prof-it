@@ -8,7 +8,7 @@ $role = $_SESSION['role'] ?? null;
 $currentNav = $currentNav ?? '';
 $active = fn($key) => $currentNav === $key ? ' style="color:#1898e9;"' : '';
 
-$prenomHeader = $_SESSION['prenom'] ?? 'Admin';
+$prenomHeader = $_SESSION['prenom'] ?? 'Utilisateur';
 $avatarUrl = 'https://ui-avatars.com/api/?name=' . urlencode($prenomHeader) . '&background=6366f1&color=fff';
 
 if (!empty($_SESSION['avatar_url'])) {
@@ -36,15 +36,21 @@ if (!empty($_SESSION['avatar_url'])) {
                         <li><a href="../student/student_page.php" <?= $active('student_home') ?>>Accueil</a></li>
                         <li><a href="../student/rdv.php" <?= $active('student_rdv') ?>>Rendez-vous</a></li>
                         <li><a href="../student/documents.php" <?= $active('student_documents') ?>>Documents</a></li>
-                        <li><a href="../student/settings.php" <?= $active('student_settings') ?>>Paramètres</a></li>
-                        <div class="dropdown">
-                            <div class="user-menu" data-bs-toggle="dropdown">
+                        <li><a href="../student/messagerie.php" <?= $active('student_messagerie') ?>>Messagerie</a></li>
+                        <li class="dropdown">
+                            <a href="#" class="user-menu" data-bs-toggle="dropdown" aria-expanded="false">
                                 <img src="<?= htmlspecialchars($avatarUrl, ENT_QUOTES, 'UTF-8') ?>"
                                     class="user-avatar" alt="Avatar">
-                                <span class="d-none d-md-inline"><?= htmlspecialchars($_SESSION['prenom'] ?? 'student') ?></span>
-                                <i class="fas fa-chevron-down" style="font-size: 12px; color: #6b7280"></i>
-                            </div>
+                                <span class="d-none d-md-inline"><?= htmlspecialchars($_SESSION['prenom'] ?? 'Étudiant') ?></span>
+                                <i class="fas fa-chevron-down" style="font-size: 12px; margin-left: 6px;"></i>
+                            </a>
                             <ul class="dropdown-menu dropdown-menu-end">
+                                <li>
+                                    <a class="dropdown-item" href="../student/settings.php">
+                                        <i class="fas fa-cog me-2"></i>Paramètres
+                                    </a>
+                                </li>
+                                <li><hr class="dropdown-divider"></li>
                                 <li>
                                     <form method="POST" action="../auth/logout.php" style="margin: 0;">
                                         <input type="hidden" name="csrf_token" value="<?= csrf_token() ?>">
@@ -54,13 +60,26 @@ if (!empty($_SESSION['avatar_url'])) {
                                     </form>
                                 </li>
                             </ul>
-                        </div>
+                        </li>
                     <?php elseif ($role === 'teacher'): ?>
                         <li><a href="../teacher/teacher_page.php" <?= $active('teacher_home') ?>>Accueil</a></li>
                         <li><a href="../teacher/rdv.php" <?= $active('teacher_rdv') ?>>Rendez-vous</a></li>
-                        <li><a href="../teacher/documents.php <?= $active('teacher_documents') ?>>Documents</a></li>
-                        <li><a href=" ../teacher/settings.php" <?= $active('student_settings') ?>>Paramètres</a></li>
-                        <ul class="dropdown-menu dropdown-menu-end">
+                        <li><a href="../teacher/documents.php" <?= $active('teacher_documents') ?>>Documents</a></li>
+                        <li><a href="../teacher/messagerie.php" <?= $active('teacher_messagerie') ?>>Messagerie</a></li>
+                        <li class="dropdown">
+                            <a href="#" class="user-menu" data-bs-toggle="dropdown" aria-expanded="false">
+                                <img src="<?= htmlspecialchars($avatarUrl, ENT_QUOTES, 'UTF-8') ?>"
+                                    class="user-avatar" alt="Avatar">
+                                <span class="d-none d-md-inline"><?= htmlspecialchars($_SESSION['prenom'] ?? 'Professeur') ?></span>
+                                <i class="fas fa-chevron-down" style="font-size: 12px; margin-left: 6px;"></i>
+                            </a>
+                            <ul class="dropdown-menu dropdown-menu-end">
+                                <li>
+                                    <a class="dropdown-item" href="../teacher/settings.php">
+                                        <i class="fas fa-cog me-2"></i>Paramètres
+                                    </a>
+                                </li>
+                                <li><hr class="dropdown-divider"></li>
                                 <li>
                                     <form method="POST" action="../auth/logout.php" style="margin: 0;">
                                         <input type="hidden" name="csrf_token" value="<?= csrf_token() ?>">
@@ -70,7 +89,7 @@ if (!empty($_SESSION['avatar_url'])) {
                                     </form>
                                 </li>
                             </ul>
-
+                        </li>
                     <?php else: ?>
                         <li><a href="../public/home.html">Accueil</a></li>
                     <?php endif; ?>
