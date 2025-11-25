@@ -21,58 +21,38 @@ $currentNav = 'student_home';
 <body>
     <?php require __DIR__ . '/../templates/header.php'; ?>
 
-    <div class="welcome-section">
-        <div class="container text-center">
-            <h1>Bienvenue dans votre espace étudiant, <span>
-                    <?= htmlspecialchars(ucfirst($prenom), ENT_QUOTES, 'UTF-8'); ?>
-                </span></h1>
-            <p class="lead">Trouvez des professeurs et progressez</p>
-        </div>
-    </div>
+    <div class="dashboard-content">
+        <div class="container-fluid">
+            <h1 class="page-title">
+                <i class="fas fa-home me-2"></i>
+                Bienvenue, <?= htmlspecialchars(ucfirst($prenom), ENT_QUOTES, 'UTF-8') ?>
+            </h1>
 
-    <div class="container mt-5">
-        <div class="row mb-4">
-            <div class="col-lg-6 mb-4">
-                <div class="card shadow-sm">
-                    <div class="card-header bg-primary text-white">
-                        <i class="fas fa-calendar-alt me-2"></i>Mes prochaines réservations
-                    </div>
-                    <div class="card-body" id="upcoming-reservations">
-                        <div class="text-center py-3">
-                            <div class="spinner-border text-primary" role="status">
-                                <span class="visually-hidden">Chargement...</span>
+            <div class="row mb-4">
+                <div class="col-lg-6 mb-4">
+                    <div class="card-custom">
+                        <div class="card-header-custom">
+                            <h5><i class="fas fa-calendar-alt me-2"></i>Mes prochaines réservations</h5>
+                            <a href="rdv.php" class="btn btn-sm btn-outline-primary">Voir tout</a>
+                        </div>
+                        <div class="card-body-custom" id="upcoming-reservations">
+                            <div class="text-center py-3">
+                                <div class="spinner-border text-primary" role="status">
+                                    <span class="visually-hidden">Chargement...</span>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
-            </div>
 
-            <div class="col-lg-6 mb-4">
-                <div class="card shadow-sm">
-                    <div class="card-header bg-info text-white">
-                        <i class="fas fa-user-check me-2"></i>Complétion du profil
-                    </div>
-                    <div class="card-body" id="profile-completion">
-                        <div class="text-center py-3">
-                            <div class="spinner-border text-info" role="status">
-                                <span class="visually-hidden">Chargement...</span>
-                            </div>
+                <div class="col-lg-6 mb-4">
+                    <div class="card-custom">
+                        <div class="card-header-custom">
+                            <h5><i class="fas fa-user-check me-2"></i>Complétion du profil</h5>
                         </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="row mb-4">
-            <div class="col-12">
-                <div class="card shadow-sm">
-                    <div class="card-header bg-success text-white">
-                        <i class="fas fa-chart-bar me-2"></i>Mes statistiques
-                    </div>
-                    <div class="card-body">
-                        <div class="row" id="student-stats">
-                            <div class="col-md-3 text-center mb-3">
-                                <div class="spinner-border text-success" role="status">
+                        <div class="card-body-custom" id="profile-completion">
+                            <div class="text-center py-3">
+                                <div class="spinner-border text-info" role="status">
                                     <span class="visually-hidden">Chargement...</span>
                                 </div>
                             </div>
@@ -80,34 +60,104 @@ $currentNav = 'student_home';
                     </div>
                 </div>
             </div>
-        </div>
 
-        <div class="row">
-            <div class="col-md-4 mb-4">
-                <div class="card h-100 shadow-sm">
-                    <div class="card-body text-center">
-                        <i class="fas fa-search fa-3x text-primary mb-3"></i>
-                        <h5 class="card-title">Trouver le Prof</h5>
-                        <p class="card-text">Recherchez le professeur idéal</p>
+            <div class="row mb-4">
+                <div class="col-12">
+                    <div class="card-custom">
+                        <div class="card-header-custom">
+                            <h5><i class="fas fa-chart-bar me-2"></i>Mes statistiques</h5>
+                        </div>
+                        <div class="card-body-custom">
+                            <div class="row" id="student-stats">
+                                <div class="col-md-3 mb-3">
+                                    <div class="stat-card">
+                                        <div class="stat-icon blue">
+                                            <i class="fas fa-graduation-cap"></i>
+                                        </div>
+                                        <div class="stat-info">
+                                            <h3 id="stat-completed">0</h3>
+                                            <p>Cours terminés</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-3 mb-3">
+                                    <div class="stat-card">
+                                        <div class="stat-icon green">
+                                            <i class="fas fa-clock"></i>
+                                        </div>
+                                        <div class="stat-info">
+                                            <h3 id="stat-hours">0h</h3>
+                                            <p>Heures étudiées</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-3 mb-3">
+                                    <div class="stat-card">
+                                        <div class="stat-icon yellow">
+                                            <i class="fas fa-book"></i>
+                                        </div>
+                                        <div class="stat-info">
+                                            <h3 id="stat-subject">-</h3>
+                                            <p>Matière favorite</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-3 mb-3">
+                                    <div class="stat-card">
+                                        <div class="stat-icon red">
+                                            <i class="fas fa-euro-sign"></i>
+                                        </div>
+                                        <div class="stat-info">
+                                            <h3 id="stat-spent">0 €</h3>
+                                            <p>Total dépensé</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
-            <div class="col-md-4 mb-4">
-                <div class="card h-100 shadow-sm">
-                    <div class="card-body text-center">
-                        <i class="fas fa-calendar-check fa-3x text-success mb-3"></i>
-                        <h5 class="card-title">Mes Cours</h5>
-                        <p class="card-text">Gérez vos séances de cours</p>
-                    </div>
+
+            <div class="row">
+                <div class="col-md-4 mb-4">
+                    <a href="#" class="text-decoration-none">
+                        <div class="card-custom h-100">
+                            <div class="card-body-custom text-center">
+                                <div class="stat-icon blue mx-auto mb-3">
+                                    <i class="fas fa-search"></i>
+                                </div>
+                                <h5 class="fw-semibold mb-2">Trouver un Prof</h5>
+                                <p class="text-muted mb-0">Recherchez le professeur idéal</p>
+                            </div>
+                        </div>
+                    </a>
                 </div>
-            </div>
-            <div class="col-md-4 mb-4">
-                <div class="card h-100 shadow-sm">
-                    <div class="card-body text-center">
-                        <i class="fas fa-chart-line fa-3x text-warning mb-3"></i>
-                        <h5 class="card-title">Ma Progression</h5>
-                        <p class="card-text">Suivez vos résultats</p>
-                    </div>
+                <div class="col-md-4 mb-4">
+                    <a href="rdv.php" class="text-decoration-none">
+                        <div class="card-custom h-100">
+                            <div class="card-body-custom text-center">
+                                <div class="stat-icon green mx-auto mb-3">
+                                    <i class="fas fa-calendar-check"></i>
+                                </div>
+                                <h5 class="fw-semibold mb-2">Mes Cours</h5>
+                                <p class="text-muted mb-0">Gérez vos séances de cours</p>
+                            </div>
+                        </div>
+                    </a>
+                </div>
+                <div class="col-md-4 mb-4">
+                    <a href="#" class="text-decoration-none">
+                        <div class="card-custom h-100">
+                            <div class="card-body-custom text-center">
+                                <div class="stat-icon yellow mx-auto mb-3">
+                                    <i class="fas fa-chart-line"></i>
+                                </div>
+                                <h5 class="fw-semibold mb-2">Ma Progression</h5>
+                                <p class="text-muted mb-0">Suivez vos résultats</p>
+                            </div>
+                        </div>
+                    </a>
                 </div>
             </div>
         </div>
@@ -147,9 +197,9 @@ $currentNav = 'student_home';
             if (!reservations || reservations.length === 0) {
                 container.innerHTML = `
                     <div class="text-center text-muted py-4">
-                        <i class="fas fa-calendar-times fa-3x mb-3"></i>
+                        <i class="fas fa-calendar-times fa-3x mb-3" style="color: #9ca3af;"></i>
                         <p>Aucune réservation à venir</p>
-                        <a href="#" class="btn btn-primary btn-sm">Réserver un cours</a>
+                        <a href="rdv.php" class="btn btn-primary btn-sm">Réserver un cours</a>
                     </div>
                 `;
                 return;
@@ -169,8 +219,8 @@ $currentNav = 'student_home';
                 });
 
                 const statusBadge = reservation.statut_reservation === 'confirmee'
-                    ? '<span class="badge bg-success">Confirmée</span>'
-                    : '<span class="badge bg-warning">En attente</span>';
+                    ? '<span class="badge-status confirmed">Confirmé</span>'
+                    : '<span class="badge-status waiting">En attente</span>';
 
                 const modeIcon = reservation.mode_choisi === 'visio'
                     ? '<i class="fas fa-video text-primary"></i>'
@@ -180,7 +230,7 @@ $currentNav = 'student_home';
                     <div class="list-group-item">
                         <div class="d-flex justify-content-between align-items-start">
                             <div class="flex-grow-1">
-                                <h6 class="mb-1">${escapeHtml(reservation.nom_matiere)} - ${escapeHtml(reservation.titre_cours)}</h6>
+                                <h6 class="mb-1 fw-semibold">${escapeHtml(reservation.nom_matiere)} - ${escapeHtml(reservation.titre_cours)}</h6>
                                 <p class="mb-1 text-muted small">
                                     ${modeIcon} avec ${escapeHtml(reservation.nom_professeur)}
                                 </p>
@@ -247,40 +297,10 @@ $currentNav = 'student_home';
         }
 
         function displayStats(stats) {
-            const container = document.getElementById('student-stats');
-
-            const html = `
-                <div class="col-md-3 text-center mb-3">
-                    <div class="stat-card">
-                        <i class="fas fa-graduation-cap fa-2x text-primary mb-2"></i>
-                        <h3 class="fw-bold mb-0">${stats.completed_courses}</h3>
-                        <p class="text-muted small mb-0">Cours terminés</p>
-                    </div>
-                </div>
-                <div class="col-md-3 text-center mb-3">
-                    <div class="stat-card">
-                        <i class="fas fa-clock fa-2x text-success mb-2"></i>
-                        <h3 class="fw-bold mb-0">${stats.total_hours}h</h3>
-                        <p class="text-muted small mb-0">Heures étudiées</p>
-                    </div>
-                </div>
-                <div class="col-md-3 text-center mb-3">
-                    <div class="stat-card">
-                        <i class="fas fa-book fa-2x text-warning mb-2"></i>
-                        <h3 class="fw-bold mb-0">${escapeHtml(stats.favorite_subject)}</h3>
-                        <p class="text-muted small mb-0">Matière favorite</p>
-                    </div>
-                </div>
-                <div class="col-md-3 text-center mb-3">
-                    <div class="stat-card">
-                        <i class="fas fa-euro-sign fa-2x text-info mb-2"></i>
-                        <h3 class="fw-bold mb-0">${stats.total_spent} €</h3>
-                        <p class="text-muted small mb-0">Total dépensé</p>
-                    </div>
-                </div>
-            `;
-
-            container.innerHTML = html;
+            document.getElementById('stat-completed').textContent = stats.completed_courses;
+            document.getElementById('stat-hours').textContent = stats.total_hours + 'h';
+            document.getElementById('stat-subject').textContent = escapeHtml(stats.favorite_subject);
+            document.getElementById('stat-spent').textContent = stats.total_spent + ' €';
         }
 
         function showError(containerId, message) {
@@ -299,3 +319,5 @@ $currentNav = 'student_home';
         }
     </script>
     <?php require __DIR__ . '/../templates/footer.php'; ?>
+</body>
+</html>

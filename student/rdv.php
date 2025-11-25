@@ -19,20 +19,19 @@ $currentNav = 'student_rdv';
 <body>
     <?php require __DIR__ . '/../templates/header.php'; ?>
 
-    <div class="welcome-section" style="padding: 3rem 0; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
-        <div class="container text-center">
-            <h1>Gestion des Rendez-vous</h1>
-            <p class="lead">Planifiez et gérez vos séances de cours</p>
-        </div>
-    </div>
+    <div class="dashboard-content">
+        <div class="container-fluid">
+            <h1 class="page-title"><i class="fas fa-calendar-check me-2"></i>Gestion des Rendez-vous</h1>
 
-    <div class="container mt-5">
-        <div class="row">
+            <div class="row">
             <!-- Colonne de gauche : Calendrier et prise de RDV -->
             <div class="col-lg-8">
-                <div class="calendar-container">
-                    <h3><i class="fas fa-calendar-alt me-2"></i>Calendrier des disponibilités</h3>
-                    <div class="row mt-4">
+                <div class="card-custom mb-4">
+                    <div class="card-header-custom">
+                        <h5><i class="fas fa-calendar-alt me-2"></i>Calendrier des disponibilités</h5>
+                    </div>
+                    <div class="card-body-custom">
+                        <div class="row">
                         <div class="col-md-6">
                             <h5>Prochaines disponibilités</h5>
                             <div class="time-slots mt-3">
@@ -89,50 +88,58 @@ $currentNav = 'student_rdv';
                             </form>
                         </div>
                     </div>
+                    </div>
                 </div>
             </div>
 
             <!-- Colonne de droite : Rendez-vous à venir -->
             <div class="col-lg-4">
-                <div class="calendar-container">
-                    <h3><i class="fas fa-clock me-2"></i>Rendez-vous à venir</h3>
-                    <div class="appointments-list mt-4">
+                <div class="card-custom mb-4">
+                    <div class="card-header-custom">
+                        <h5><i class="fas fa-clock me-2"></i>Rendez-vous à venir</h5>
+                    </div>
+                    <div class="card-body-custom">
+                        <div class="appointments-list">
                         <div class="appointment-card">
                             <div class="d-flex justify-content-between align-items-start mb-2">
-                                <h6>Mathématiques - Algèbre</h6>
-                                <span class="appointment-status status-confirmed">Confirmé</span>
+                                <h6 class="mb-0">Mathématiques - Algèbre</h6>
+                                <span class="badge-status confirmed">Confirmé</span>
                             </div>
-                            <p class="mb-1"><i class="fas fa-user me-2"></i>Prof. Marie Dubois</p>
-                            <p class="mb-1"><i class="fas fa-calendar me-2"></i>Lundi 15 Jan, 14:00-15:00</p>
-                            <p class="mb-0"><i class="fas fa-video me-2"></i>Visio</p>
+                            <p class="mb-1 text-muted small"><i class="fas fa-user me-2"></i>Prof. Marie Dubois</p>
+                            <p class="mb-1 text-muted small"><i class="fas fa-calendar me-2"></i>Lundi 15 Jan, 14:00-15:00</p>
+                            <p class="mb-0 text-muted small"><i class="fas fa-video me-2"></i>Visio</p>
                         </div>
 
                         <div class="appointment-card">
                             <div class="d-flex justify-content-between align-items-start mb-2">
-                                <h6>Anglais - Conversation</h6>
-                                <span class="appointment-status status-pending">En attente</span>
+                                <h6 class="mb-0">Anglais - Conversation</h6>
+                                <span class="badge-status waiting">En attente</span>
                             </div>
-                            <p class="mb-1"><i class="fas fa-user me-2"></i>Prof. Pierre Martin</p>
-                            <p class="mb-1"><i class="fas fa-calendar me-2"></i>Mardi 16 Jan, 10:30-11:30</p>
-                            <p class="mb-0"><i class="fas fa-home me-2"></i>À domicile</p>
+                            <p class="mb-1 text-muted small"><i class="fas fa-user me-2"></i>Prof. Pierre Martin</p>
+                            <p class="mb-1 text-muted small"><i class="fas fa-calendar me-2"></i>Mardi 16 Jan, 10:30-11:30</p>
+                            <p class="mb-0 text-muted small"><i class="fas fa-home me-2"></i>À domicile</p>
                         </div>
 
                         <div class="appointment-card">
                             <div class="d-flex justify-content-between align-items-start mb-2">
-                                <h6>Physique - Mécanique</h6>
-                                <span class="appointment-status status-confirmed">Confirmé</span>
+                                <h6 class="mb-0">Physique - Mécanique</h6>
+                                <span class="badge-status confirmed">Confirmé</span>
                             </div>
-                            <p class="mb-1"><i class="fas fa-user me-2"></i>Prof. Sophie Laurent</p>
-                            <p class="mb-1"><i class="fas fa-calendar me-2"></i>Mercredi 17 Jan, 16:00-17:00</p>
-                            <p class="mb-0"><i class="fas fa-video me-2"></i>Visio</p>
+                            <p class="mb-1 text-muted small"><i class="fas fa-user me-2"></i>Prof. Sophie Laurent</p>
+                            <p class="mb-1 text-muted small"><i class="fas fa-calendar me-2"></i>Mercredi 17 Jan, 16:00-17:00</p>
+                            <p class="mb-0 text-muted small"><i class="fas fa-video me-2"></i>Visio</p>
                         </div>
+                    </div>
                     </div>
                 </div>
 
                 <!-- Statistiques -->
-                <div class="calendar-container">
-                    <h3><i class="fas fa-chart-bar me-2"></i>Statistiques</h3>
-                    <div class="row text-center mt-4">
+                <div class="card-custom">
+                    <div class="card-header-custom">
+                        <h5><i class="fas fa-chart-bar me-2"></i>Statistiques</h5>
+                    </div>
+                    <div class="card-body-custom">
+                        <div class="row text-center">
                         <div class="col-6">
                             <div class="border rounded p-3">
                                 <h4 class="text-primary">3</h4>
@@ -146,11 +153,32 @@ $currentNav = 'student_rdv';
                             </div>
                         </div>
                     </div>
+                    </div>
                 </div>
             </div>
         </div>
+        </div>
     </div>
-    
-<script src="index.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-<?php require __DIR__ . '/../templates/footer.php'; ?>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        function selectTimeSlot(element) {
+            document.querySelectorAll('.time-slot').forEach(slot => slot.classList.remove('selected'));
+            element.classList.add('selected');
+            const timeText = element.querySelector('div').textContent;
+            const dateText = element.querySelector('small').textContent;
+            document.getElementById('selected-time').value = `${dateText} - ${timeText}`;
+        }
+
+        function takeAppointment() {
+            const selectedTime = document.getElementById('selected-time').value;
+            if (!selectedTime) {
+                alert('Veuillez sélectionner un créneau horaire');
+                return;
+            }
+            alert('Rendez-vous demandé ! Le professeur recevra votre demande.');
+        }
+    </script>
+    <?php require __DIR__ . '/../templates/footer.php'; ?>
+</body>
+</html>
