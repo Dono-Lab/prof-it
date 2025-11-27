@@ -6,6 +6,7 @@ $currentNav = 'teacher_messagerie';
 ?>
 <!DOCTYPE html>
 <html lang="fr">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -14,6 +15,7 @@ $currentNav = 'teacher_messagerie';
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="../assets/css/style.css">
 </head>
+
 <body>
     <?php require __DIR__ . '/../templates/header.php'; ?>
 
@@ -22,7 +24,6 @@ $currentNav = 'teacher_messagerie';
             <h1 class="page-title"><i class="fas fa-comments me-2"></i>Messagerie</h1>
 
             <div class="chat-container">
-                <!-- Sidebar: List of conversations -->
                 <div class="chat-sidebar">
                     <div class="p-3 border-bottom">
                         <div class="input-group">
@@ -30,8 +31,8 @@ $currentNav = 'teacher_messagerie';
                                 <i class="fas fa-search text-muted"></i>
                             </span>
                             <input type="text" class="form-control border-start-0"
-                                   placeholder="Rechercher une conversation..."
-                                   id="search-conversations">
+                                placeholder="Rechercher une conversation..."
+                                id="search-conversations">
                         </div>
                     </div>
 
@@ -45,13 +46,11 @@ $currentNav = 'teacher_messagerie';
                     </div>
                 </div>
 
-                <!-- Main chat area -->
                 <div class="chat-main">
-                    <!-- Chat header -->
                     <div class="p-3 border-bottom bg-white" id="chat-header">
                         <div class="d-flex align-items-center gap-3">
                             <img src="https://ui-avatars.com/api/?name=Jean+Dupont&background=3b82f6&color=fff"
-                                 class="rounded-circle" width="48" height="48" alt="Avatar" id="chat-header-avatar">
+                                class="rounded-circle" width="48" height="48" alt="Avatar" id="chat-header-avatar">
                             <div class="flex-grow-1">
                                 <h6 class="mb-0 fw-semibold" id="chat-header-name">Jean Dupont</h6>
                                 <small class="text-muted" id="chat-header-status">Étudiant</small>
@@ -62,7 +61,6 @@ $currentNav = 'teacher_messagerie';
                         </div>
                     </div>
 
-                    <!-- Messages area -->
                     <div class="flex-grow-1 overflow-auto p-4" id="messages-area" style="background: #f9fafb;">
                         <div class="d-flex flex-column" id="messages-container">
                             <div class="text-center py-5 text-muted">
@@ -72,16 +70,15 @@ $currentNav = 'teacher_messagerie';
                         </div>
                     </div>
 
-                    <!-- Message input -->
                     <div class="p-3 border-top bg-white">
                         <div class="input-group">
                             <button class="btn btn-outline-secondary" type="button" title="Joindre un fichier">
                                 <i class="fas fa-paperclip"></i>
                             </button>
                             <input type="text" class="form-control"
-                                   placeholder="Tapez votre message..."
-                                   id="message-input"
-                                   autocomplete="off">
+                                placeholder="Tapez votre message..."
+                                id="message-input"
+                                autocomplete="off">
                             <button class="btn btn-primary" type="button" id="send-message">
                                 <i class="fas fa-paper-plane"></i>
                             </button>
@@ -137,9 +134,9 @@ $currentNav = 'teacher_messagerie';
                 }
 
                 conversationsList.innerHTML = convs.map((conv, index) => {
-                    const unreadBadge = conv.nb_non_lus > 0
-                        ? `<span class="badge bg-primary rounded-pill mt-1">${conv.nb_non_lus}</span>`
-                        : '';
+                    const unreadBadge = conv.nb_non_lus > 0 ?
+                        `<span class="badge bg-primary rounded-pill mt-1">${conv.nb_non_lus}</span>` :
+                        '';
                     const unreadClass = conv.nb_non_lus > 0 ? 'unread' : '';
                     const activeClass = index === 0 ? 'active' : '';
 
@@ -230,9 +227,9 @@ $currentNav = 'teacher_messagerie';
 
                 messagesContainer.innerHTML = messages.map(msg => {
                     const isSent = msg.id_utilisateur == <?= $userId ?? 0 ?>;
-                    const avatarUrl = msg.auteur_photo
-                        ? '../' + escapeHtml(msg.auteur_photo)
-                        : getAvatarUrl(msg.auteur_nom);
+                    const avatarUrl = msg.auteur_photo ?
+                        '../' + escapeHtml(msg.auteur_photo) :
+                        getAvatarUrl(msg.auteur_nom);
 
                     if (isSent) {
                         return `
@@ -269,9 +266,9 @@ $currentNav = 'teacher_messagerie';
             function updateChatHeader(conversationId) {
                 const conv = conversations.find(c => c.id_conversation == conversationId);
                 if (conv) {
-                    const avatarUrl = conv.contact_photo
-                        ? '../' + escapeHtml(conv.contact_photo)
-                        : getAvatarUrl(conv.contact_nom);
+                    const avatarUrl = conv.contact_photo ?
+                        '../' + escapeHtml(conv.contact_photo) :
+                        getAvatarUrl(conv.contact_nom);
 
                     document.getElementById('chat-header-name').textContent = conv.contact_nom;
                     document.getElementById('chat-header-status').textContent = 'Étudiant';
@@ -366,13 +363,19 @@ $currentNav = 'teacher_messagerie';
                 const diffDays = Math.floor((now - date) / (1000 * 60 * 60 * 24));
 
                 if (diffDays === 0) {
-                    return date.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+                    return date.toLocaleTimeString('fr-FR', {
+                        hour: '2-digit',
+                        minute: '2-digit'
+                    });
                 } else if (diffDays === 1) {
                     return 'Hier';
                 } else if (diffDays < 7) {
                     return diffDays + ' jours';
                 } else {
-                    return date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
+                    return date.toLocaleDateString('fr-FR', {
+                        day: 'numeric',
+                        month: 'short'
+                    });
                 }
             }
 
@@ -383,16 +386,29 @@ $currentNav = 'teacher_messagerie';
                 const diffDays = Math.floor((now - date) / (1000 * 60 * 60 * 24));
 
                 if (diffDays === 0) {
-                    return "Aujourd'hui à " + date.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+                    return "Aujourd'hui à " + date.toLocaleTimeString('fr-FR', {
+                        hour: '2-digit',
+                        minute: '2-digit'
+                    });
                 } else if (diffDays === 1) {
-                    return 'Hier à ' + date.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+                    return 'Hier à ' + date.toLocaleTimeString('fr-FR', {
+                        hour: '2-digit',
+                        minute: '2-digit'
+                    });
                 } else {
-                    return date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' }) + ' à ' +
-                           date.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+                    return date.toLocaleDateString('fr-FR', {
+                            day: 'numeric',
+                            month: 'short'
+                        }) + ' à ' +
+                        date.toLocaleTimeString('fr-FR', {
+                            hour: '2-digit',
+                            minute: '2-digit'
+                        });
                 }
             }
         });
     </script>
     <?php require __DIR__ . '/../templates/footer.php'; ?>
 </body>
+
 </html>

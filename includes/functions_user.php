@@ -1,9 +1,5 @@
 <?php
 /**
- * Fonctions utilitaires pour les données utilisateurs
- */
-
-/**
  * Récupère l'URL de l'avatar utilisateur
  * @param int $user_id ID de l'utilisateur
  * @param PDO $conn Connexion à la base de données
@@ -47,7 +43,6 @@ function get_student_stats($user_id, $conn) {
     $result = $stmt->fetch();
     $stats['cours_termines'] = (int)$result['nb_cours'];
 
-    // Total des heures et dépenses
     $stmt = $conn->prepare("
         SELECT
             SUM(TIMESTAMPDIFF(MINUTE, c.date_debut, c.date_fin) / 60) as total_heures,
@@ -61,7 +56,6 @@ function get_student_stats($user_id, $conn) {
     $stats['heures_total'] = round($result['total_heures'] ?? 0, 1);
     $stats['depenses_total'] = round($result['total_depense'] ?? 0, 2);
 
-    // Matière préférée (celle avec le plus de cours)
     $stmt = $conn->prepare("
         SELECT m.nom_matiere, COUNT(*) as nb_cours
         FROM reservation r
@@ -99,7 +93,6 @@ function get_teacher_stats($user_id, $conn) {
         'revenus_total' => 0
     ];
 
-    // Nombre d'étudiants uniques et réservations
     $stmt = $conn->prepare("
         SELECT
             COUNT(DISTINCT r.id_utilisateur) as nb_etudiants,
@@ -113,7 +106,6 @@ function get_teacher_stats($user_id, $conn) {
     $stats['nb_etudiants'] = (int)$result['nb_etudiants'];
     $stats['nb_reservations'] = (int)$result['nb_reservations'];
 
-    // Note moyenne et nombre d'avis
     $stmt = $conn->prepare("
         SELECT
             AVG(a.note) as note_moyenne,
@@ -128,7 +120,6 @@ function get_teacher_stats($user_id, $conn) {
     $stats['note_moyenne'] = round($result['note_moyenne'] ?? 0, 1);
     $stats['nb_avis'] = (int)$result['nb_avis'];
 
-    // Heures données et revenus
     $stmt = $conn->prepare("
         SELECT
             SUM(TIMESTAMPDIFF(MINUTE, c.date_debut, c.date_fin) / 60) as total_heures,
@@ -191,7 +182,7 @@ function get_student_upcoming_courses($user_id, $conn, $limit = 5) {
  * @return array Liste des prochaines sessions
  */
 function get_teacher_upcoming_sessions($user_id, $conn, $limit = 5) {
-    $limit = (int)$limit; // Sécurisation du paramètre
+    $limit = (int)$limit; 
     $stmt = $conn->prepare("
         SELECT
             r.id_reservation,
@@ -333,8 +324,8 @@ function format_relative_date($dateStr) {
 
 /**
  * Retourne la classe Bootstrap pour une priorité
- * @param string $priority Priorité du ticket
- * @return string Classe de couleur Bootstrap
+ * @param string
+ * @return string 
  */
 function get_priority_color($priority) {
     $colors = [

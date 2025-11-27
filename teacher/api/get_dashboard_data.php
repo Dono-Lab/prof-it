@@ -16,7 +16,6 @@ $action = $_GET['action'] ?? 'all';
 try {
     switch ($action) {
         case 'upcoming_sessions':
-            // Récupérer les prochaines sessions
             $stmt = $conn->prepare("
                 SELECT
                     r.id_reservation,
@@ -47,9 +46,6 @@ try {
             break;
 
         case 'stats':
-            // Utiliser la vue stats_professeurs ou faire des requêtes individuelles
-
-            // Nombre total de réservations
             $stmt = $conn->prepare("
                 SELECT COUNT(*) as total_reservations
                 FROM creneau c
@@ -60,7 +56,6 @@ try {
             $stmt->execute([$userId]);
             $totalReservations = $stmt->fetch()['total_reservations'];
 
-            // Note moyenne
             $stmt = $conn->prepare("
                 SELECT COALESCE(AVG(a.note), 0) as avg_rating, COUNT(a.id_avis) as total_reviews
                 FROM creneau c
@@ -71,7 +66,6 @@ try {
             $stmt->execute([$userId]);
             $rating = $stmt->fetch();
 
-            // Nombre d'étudiants uniques
             $stmt = $conn->prepare("
                 SELECT COUNT(DISTINCT r.id_utilisateur) as total_students
                 FROM creneau c
@@ -82,7 +76,6 @@ try {
             $stmt->execute([$userId]);
             $totalStudents = $stmt->fetch()['total_students'];
 
-            // Revenus du mois en cours
             $stmt = $conn->prepare("
                 SELECT COALESCE(SUM(r.montant_ttc), 0) as monthly_revenue
                 FROM creneau c
@@ -95,7 +88,6 @@ try {
             $stmt->execute([$userId]);
             $monthlyRevenue = $stmt->fetch()['monthly_revenue'];
 
-            // Heures enseignées
             $stmt = $conn->prepare("
                 SELECT COALESCE(SUM(TIMESTAMPDIFF(HOUR, c.date_debut, c.date_fin)), 0) as total_hours
                 FROM creneau c
@@ -120,7 +112,6 @@ try {
             break;
 
         case 'available_slots':
-            // Créneaux disponibles cette semaine
             $stmt = $conn->prepare("
                 SELECT
                     c.id_creneau,
@@ -148,9 +139,7 @@ try {
             break;
 
         case 'all':
-            // Retourner toutes les données en une seule requête
 
-            // Upcoming sessions
             $stmt = $conn->prepare("
                 SELECT
                     r.id_reservation,
@@ -177,7 +166,6 @@ try {
             $stmt->execute([$userId]);
             $sessions = $stmt->fetchAll();
 
-            // Stats
             $stmt = $conn->prepare("
                 SELECT COUNT(*) as total_reservations
                 FROM creneau c
@@ -230,7 +218,6 @@ try {
             $stmt->execute([$userId]);
             $totalHours = $stmt->fetch()['total_hours'];
 
-            // Available slots
             $stmt = $conn->prepare("
                 SELECT
                     c.id_creneau,

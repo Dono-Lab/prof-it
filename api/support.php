@@ -1,9 +1,4 @@
 <?php
-/**
- * API de gestion des tickets de support
- * Gère la création et la lecture des tickets
- */
-
 require_once __DIR__ . '/../includes/helpers.php';
 require_once __DIR__ . '/../config/config.php';
 
@@ -39,9 +34,6 @@ try {
     echo json_encode(['success' => false, 'error' => 'Erreur serveur: ' . $e->getMessage()]);
 }
 
-/**
- * Gestion des requêtes GET
- */
 function handleGetRequest($conn, $userId) {
     $action = $_GET['action'] ?? '';
 
@@ -60,9 +52,6 @@ function handleGetRequest($conn, $userId) {
     }
 }
 
-/**
- * Gestion des requêtes POST
- */
 function handlePostRequest($conn, $userId) {
     $csrfToken = $_POST['csrf_token'] ?? '';
     if (!verify_csrf($csrfToken)) {
@@ -84,9 +73,6 @@ function handlePostRequest($conn, $userId) {
     }
 }
 
-/**
- * Récupère tous les tickets de l'utilisateur
- */
 function getTickets($conn, $userId) {
     $sql = "
         SELECT
@@ -113,9 +99,6 @@ function getTickets($conn, $userId) {
     ]);
 }
 
-/**
- * Récupère les statistiques des tickets
- */
 function getStats($conn, $userId) {
     $stmt = $conn->prepare("SELECT COUNT(*) as total FROM ticket_support WHERE id_utilisateur = ?");
     $stmt->execute([$userId]);
@@ -144,9 +127,6 @@ function getStats($conn, $userId) {
     ]);
 }
 
-/**
- * Crée un nouveau ticket
- */
 function createTicket($conn, $userId) {
     $sujet = trim($_POST['sujet'] ?? '');
     $categorie = trim($_POST['categorie'] ?? '');
