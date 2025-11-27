@@ -26,7 +26,7 @@ if (!empty($_SESSION['avatar_url'])) {
     <div class="container header-container">
         <div class="header-content">
             <div class="logo">
-                <a href="../index.php">
+                <a href="../public/home.html">
                     <img id="logo" src="../assets/img/prof_it_logo_blanc.png" alt="Prof-IT">
                 </a>
             </div>
@@ -48,6 +48,11 @@ if (!empty($_SESSION['avatar_url'])) {
                                 <li>
                                     <a class="dropdown-item" href="../student/settings.php">
                                         <i class="fas fa-cog me-2"></i>Paramètres
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item" href="../student/support.php">
+                                        <i class="fas fa-headset me-2"></i>Support
                                     </a>
                                 </li>
                                 <li><hr class="dropdown-divider"></li>
@@ -77,6 +82,11 @@ if (!empty($_SESSION['avatar_url'])) {
                                 <li>
                                     <a class="dropdown-item" href="../teacher/settings.php">
                                         <i class="fas fa-cog me-2"></i>Paramètres
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item" href="../teacher/support.php">
+                                        <i class="fas fa-headset me-2"></i>Support
                                     </a>
                                 </li>
                                 <li><hr class="dropdown-divider"></li>
