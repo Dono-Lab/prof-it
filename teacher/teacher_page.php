@@ -37,7 +37,6 @@ $availableSlots = get_teacher_available_slots($userId, $conn, 3);
                 Bienvenue, <?= htmlspecialchars(ucfirst($prenom), ENT_QUOTES, 'UTF-8') ?>
             </h1>
 
-            <!-- Statistiques -->
             <div class="row mb-4">
                 <div class="col-lg-2 col-md-4 mb-3">
                     <div class="stat-card flex-column">
@@ -101,7 +100,6 @@ $availableSlots = get_teacher_available_slots($userId, $conn, 3);
             </div>
 
             <div class="row">
-                <!-- Sessions à venir -->
                 <div class="col-lg-6 mb-4">
                     <div class="card-custom">
                         <div class="card-header-custom">
@@ -163,7 +161,6 @@ $availableSlots = get_teacher_available_slots($userId, $conn, 3);
                     </div>
                 </div>
 
-                <!-- Créneaux disponibles -->
                 <div class="col-lg-6 mb-4">
                     <div class="card-custom">
                         <div class="card-header-custom">
@@ -217,7 +214,6 @@ $availableSlots = get_teacher_available_slots($userId, $conn, 3);
                 </div>
             </div>
 
-            <!-- Raccourcis -->
             <div class="row">
                 <div class="col-12">
                     <div class="card-custom">

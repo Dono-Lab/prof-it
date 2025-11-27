@@ -1,9 +1,4 @@
 <?php
-/**
- * API de gestion de la messagerie
- * Gère les conversations et messages entre étudiants et professeurs
- */
-
 require_once __DIR__ . '/../includes/helpers.php';
 require_once __DIR__ . '/../config/config.php';
 
@@ -39,9 +34,7 @@ try {
     echo json_encode(['success' => false, 'error' => 'Erreur serveur: ' . $e->getMessage()]);
 }
 
-/**
- * Gestion des requêtes GET
- */
+
 function handleGetRequest($conn, $userId, $userRole) {
     $action = $_GET['action'] ?? '';
 
@@ -66,9 +59,6 @@ function handleGetRequest($conn, $userId, $userRole) {
     }
 }
 
-/**
- * Gestion des requêtes POST
- */
 function handlePostRequest($conn, $userId, $userRole) {
     $csrfToken = $_POST['csrf_token'] ?? '';
     if (!verify_csrf($csrfToken)) {
@@ -94,9 +84,6 @@ function handlePostRequest($conn, $userId, $userRole) {
     }
 }
 
-/**
- * Récupère toutes les conversations de l'utilisateur
- */
 function getConversations($conn, $userId, $userRole) {
     if ($userRole === 'student') {
         $sql = "
@@ -154,9 +141,6 @@ function getConversations($conn, $userId, $userRole) {
     ]);
 }
 
-/**
- * Récupère les messages d'une conversation
- */
 function getMessages($conn, $userId, $userRole, $conversationId) {
     if ($userRole === 'student') {
         $checkSql = "
@@ -212,9 +196,6 @@ function getMessages($conn, $userId, $userRole, $conversationId) {
     ]);
 }
 
-/**
- * Envoie un nouveau message
- */
 function sendMessage($conn, $userId, $userRole) {
     $conversationId = $_POST['conversation_id'] ?? null;
     $contenu = trim($_POST['contenu'] ?? '');
@@ -266,9 +247,6 @@ function sendMessage($conn, $userId, $userRole) {
     ]);
 }
 
-/**
- * Marque les messages comme lus
- */
 function markAsRead($conn, $userId) {
     $conversationId = $_POST['conversation_id'] ?? null;
 

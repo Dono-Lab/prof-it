@@ -66,14 +66,11 @@ if (!move_uploaded_file($tmp, $targetPath)) {
     exit;
 }
 
-// Chemin utilisable depuis le web (racine du projet)
 $photoUrl = 'assets/img/avatars/' . $filename;
 
-// Mise à jour DB
 $stmt = $conn->prepare("UPDATE users SET photo_url = ? WHERE id = ?");
 $stmt->execute([$photoUrl, $userId]);
 
-// Session + message
 $_SESSION['avatar_url'] = $photoUrl;
 $_SESSION['success_message'] = 'Avatar mis à jour avec succès.';
 

@@ -1,9 +1,4 @@
 <?php
-/**
- * API de gestion des rendez-vous et créneaux
- * Gère les disponibilités, réservations et statistiques
- */
-
 require_once __DIR__ . '/../includes/helpers.php';
 require_once __DIR__ . '/../config/config.php';
 
@@ -39,10 +34,8 @@ try {
     echo json_encode(['success' => false, 'error' => 'Erreur serveur: ' . $e->getMessage()]);
 }
 
-/**
- * Gestion des requêtes GET
- */
-function handleGetRequest($conn, $userId, $userRole) {
+function handleGetRequest($conn, $userId, $userRole)
+{
     $action = $_GET['action'] ?? '';
 
     switch ($action) {
@@ -68,10 +61,8 @@ function handleGetRequest($conn, $userId, $userRole) {
     }
 }
 
-/**
- * Gestion des requêtes POST
- */
-function handlePostRequest($conn, $userId, $userRole) {
+function handlePostRequest($conn, $userId, $userRole)
+{
     $csrfToken = $_POST['csrf_token'] ?? '';
     if (!verify_csrf($csrfToken)) {
         http_response_code(403);
@@ -106,10 +97,8 @@ function handlePostRequest($conn, $userId, $userRole) {
     }
 }
 
-/**
- * Récupère les créneaux disponibles
- */
-function getAvailableSlots($conn, $userId, $userRole) {
+function getAvailableSlots($conn, $userId, $userRole)
+{
     if ($userRole === 'student') {
         $sql = "
             SELECT
@@ -172,10 +161,8 @@ function getAvailableSlots($conn, $userId, $userRole) {
     ]);
 }
 
-/**
- * Récupère les rendez-vous à venir
- */
-function getUpcomingAppointments($conn, $userId, $userRole) {
+function getUpcomingAppointments($conn, $userId, $userRole)
+{
     if ($userRole === 'student') {
         $sql = "
             SELECT
@@ -238,10 +225,8 @@ function getUpcomingAppointments($conn, $userId, $userRole) {
     ]);
 }
 
-/**
- * Récupère les statistiques
- */
-function getStats($conn, $userId, $userRole) {
+function getStats($conn, $userId, $userRole)
+{
     if ($userRole === 'student') {
         $stmt = $conn->prepare("
             SELECT COUNT(*) as count
@@ -305,10 +290,8 @@ function getStats($conn, $userId, $userRole) {
     }
 }
 
-/**
- * Récupère la liste des professeurs avec leurs offres
- */
-function getTeachers($conn) {
+function getTeachers($conn)
+{
     $sql = "
         SELECT DISTINCT
             u.id,
@@ -335,10 +318,8 @@ function getTeachers($conn) {
     ]);
 }
 
-/**
- * Réserve un créneau (étudiant)
- */
-function bookSlot($conn, $userId) {
+function bookSlot($conn, $userId)
+{
     $creneauId = (int)($_POST['creneau_id'] ?? 0);
     $modeChoisi = trim($_POST['mode_choisi'] ?? '');
 
@@ -416,10 +397,8 @@ function bookSlot($conn, $userId) {
     ]);
 }
 
-/**
- * Crée un nouveau créneau de disponibilité (professeur)
- */
-function createSlot($conn, $userId) {
+function createSlot($conn, $userId)
+{
     $offreId = (int)($_POST['offre_id'] ?? 0);
     $dateDebut = trim($_POST['date_debut'] ?? '');
     $dateFin = trim($_POST['date_fin'] ?? '');

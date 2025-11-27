@@ -1,3 +1,3 @@
-<?php // scripts communs éventuels si tu veux les centraliser ?>
+<?php  ?>
 </body>
 </html>

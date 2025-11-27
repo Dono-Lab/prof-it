@@ -24,7 +24,6 @@ $currentNav = 'student_messagerie';
             <h1 class="page-title"><i class="fas fa-comments me-2"></i>Messagerie</h1>
 
             <div class="chat-container">
-                <!-- Sidebar: List of conversations -->
                 <div class="chat-sidebar">
                     <div class="p-3 border-bottom">
                         <div class="input-group">
@@ -47,9 +46,7 @@ $currentNav = 'student_messagerie';
                     </div>
                 </div>
 
-                <!-- Main chat area -->
                 <div class="chat-main">
-                    <!-- Chat header -->
                     <div class="p-3 border-bottom bg-white" id="chat-header">
                         <div class="d-flex align-items-center gap-3">
                             <img src="https://ui-avatars.com/api/?name=Marie+Dubois&background=3b82f6&color=fff"
@@ -64,7 +61,6 @@ $currentNav = 'student_messagerie';
                         </div>
                     </div>
 
-                    <!-- Messages area -->
                     <div class="flex-grow-1 overflow-auto p-4" id="messages-area" style="background: #f9fafb;">
                         <div class="d-flex flex-column" id="messages-container">
                             <div class="text-center py-5 text-muted">
@@ -74,7 +70,6 @@ $currentNav = 'student_messagerie';
                         </div>
                     </div>
 
-                    <!-- Message input -->
                     <div class="p-3 border-top bg-white">
                         <div class="input-group">
                             <button class="btn btn-outline-secondary" type="button" title="Joindre un fichier">

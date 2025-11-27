@@ -24,7 +24,6 @@ $currentNav = 'teacher_documents';
         <div class="container-fluid">
             <h1 class="page-title"><i class="fas fa-folder-open me-2"></i>Gestion des Documents</h1>
 
-            <!-- Dossiers par matière -->
             <div class="card-custom mb-4">
                 <div class="card-header-custom">
                     <h5><i class="fas fa-folder me-2"></i>Mes ressources pédagogiques</h5>
@@ -64,7 +63,6 @@ $currentNav = 'teacher_documents';
             </div>
 
             <div class="row">
-                <!-- Documents récents -->
                 <div class="col-lg-8">
                     <div class="card-custom">
                         <div class="card-header-custom">
@@ -165,7 +163,6 @@ $currentNav = 'teacher_documents';
                     </div>
                 </div>
 
-                <!-- Zone de dépôt et statistiques -->
                 <div class="col-lg-4">
                     <div class="card-custom mb-4">
                         <div class="card-header-custom">
@@ -182,7 +179,6 @@ $currentNav = 'teacher_documents';
                         </div>
                     </div>
 
-                    <!-- Statistiques des documents -->
                     <div class="card-custom">
                         <div class="card-header-custom">
                             <h5><i class="fas fa-chart-pie me-2"></i>Statistiques</h5>
