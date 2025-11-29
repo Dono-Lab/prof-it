@@ -47,12 +47,20 @@ function handleGetRequest($conn, $userId, $userRole)
             getUpcomingAppointments($conn, $userId, $userRole);
             break;
 
+        case 'history_appointments':
+            getHistoryAppointments($conn, $userId, $userRole);
+            break;
+
         case 'stats':
             getStats($conn, $userId, $userRole);
             break;
 
         case 'teachers':
             getTeachers($conn);
+            break;
+
+        case 'search_courses':
+            searchCourses($conn, $userId, $userRole);
             break;
 
         default:
@@ -91,6 +99,15 @@ function handlePostRequest($conn, $userId, $userRole)
             createSlot($conn, $userId);
             break;
 
+        case 'update_status':
+            if ($userRole !== 'teacher') {
+                http_response_code(403);
+                echo json_encode(['success' => false, 'error' => 'Action réservée aux enseignants']);
+                return;
+            }
+            updateCourseStatus($conn, $userId);
+            break;
+
         default:
             http_response_code(400);
             echo json_encode(['success' => false, 'error' => 'Action invalide']);
@@ -99,6 +116,14 @@ function handlePostRequest($conn, $userId, $userRole)
 
 function getAvailableSlots($conn, $userId, $userRole)
 {
+    $offerId = isset($_GET['offre_id']) ? (int)$_GET['offre_id'] : 0;
+    $offerSql = '';
+    $offerParams = [];
+    if ($offerId > 0) {
+        $offerSql = ' AND o.id_offre = ? ';
+        $offerParams[] = $offerId;
+    }
+
     if ($userRole === 'student') {
         $sql = "
             SELECT
@@ -122,12 +147,13 @@ function getAvailableSlots($conn, $userId, $userRole)
             LEFT JOIN matiere m ON co.id_matiere = m.id_matiere
             WHERE c.statut_creneau = 'disponible'
             AND c.date_debut > NOW()
+            {$offerSql}
             AND prof.role = 'teacher'
             ORDER BY c.date_debut ASC
             LIMIT 20
         ";
         $stmt = $conn->prepare($sql);
-        $stmt->execute();
+        $stmt->execute($offerParams);
     } else {
         $sql = "
             SELECT
@@ -146,11 +172,12 @@ function getAvailableSlots($conn, $userId, $userRole)
             WHERE c.id_utilisateur = ?
             AND c.statut_creneau = 'disponible'
             AND c.date_debut > NOW()
+            {$offerSql}
             ORDER BY c.date_debut ASC
             LIMIT 20
         ";
         $stmt = $conn->prepare($sql);
-        $stmt->execute([$userId]);
+        $stmt->execute(array_merge([$userId], $offerParams));
     }
 
     $slots = $stmt->fetchAll();
@@ -218,10 +245,182 @@ function getUpcomingAppointments($conn, $userId, $userRole)
     }
 
     $appointments = $stmt->fetchAll();
+    foreach ($appointments as &$appointment) {
+        $appointment['statut_cours'] = compute_course_status(
+            $appointment['date_debut'],
+            $appointment['date_fin'],
+            $appointment['statut_reservation']
+        );
+    }
 
     echo json_encode([
         'success' => true,
         'appointments' => $appointments
+    ]);
+}
+
+function getHistoryAppointments($conn, $userId, $userRole)
+{
+    if ($userRole === 'student') {
+        $sql = "
+            SELECT
+                r.id_reservation,
+                r.statut_reservation,
+                r.mode_choisi,
+                c.date_debut,
+                c.date_fin,
+                c.lieu,
+                o.titre as titre_cours,
+                m.nom_matiere,
+                CONCAT(prof.prenom, ' ', prof.nom) as nom_professeur,
+                prof.photo_url as photo_professeur
+            FROM reservation r
+            INNER JOIN creneau c ON r.id_creneau = c.id_creneau
+            INNER JOIN users prof ON c.id_utilisateur = prof.id
+            INNER JOIN offre_cours o ON c.id_offre = o.id_offre
+            LEFT JOIN couvrir co ON o.id_offre = co.id_offre
+            LEFT JOIN matiere m ON co.id_matiere = m.id_matiere
+            WHERE r.id_utilisateur = ?
+            AND r.statut_reservation = 'terminee'
+            ORDER BY c.date_debut DESC
+            LIMIT 10
+        ";
+        $stmt = $conn->prepare($sql);
+        $stmt->execute([$userId]);
+    } else {
+        $sql = "
+            SELECT
+                r.id_reservation,
+                r.statut_reservation,
+                r.mode_choisi,
+                c.date_debut,
+                c.date_fin,
+                c.lieu,
+                o.titre as titre_cours,
+                m.nom_matiere,
+                CONCAT(etudiant.prenom, ' ', etudiant.nom) as nom_etudiant,
+                etudiant.photo_url as photo_etudiant
+            FROM creneau c
+            INNER JOIN reservation r ON c.id_creneau = r.id_creneau
+            INNER JOIN users etudiant ON r.id_utilisateur = etudiant.id
+            INNER JOIN offre_cours o ON c.id_offre = o.id_offre
+            LEFT JOIN couvrir co ON o.id_offre = co.id_offre
+            LEFT JOIN matiere m ON co.id_matiere = m.id_matiere
+            WHERE c.id_utilisateur = ?
+            AND r.statut_reservation = 'terminee'
+            ORDER BY c.date_debut DESC
+            LIMIT 10
+        ";
+        $stmt = $conn->prepare($sql);
+        $stmt->execute([$userId]);
+    }
+
+    $appointments = $stmt->fetchAll();
+    foreach ($appointments as &$appointment) {
+        $appointment['statut_cours'] = compute_course_status(
+            $appointment['date_debut'],
+            $appointment['date_fin'],
+            $appointment['statut_reservation']
+        );
+    }
+
+    echo json_encode([
+        'success' => true,
+        'appointments' => $appointments
+    ]);
+}
+
+function searchCourses($conn, $userId, $userRole)
+{
+    $query = trim($_GET['query'] ?? '');
+    $scope = $_GET['scope'] ?? 'public';
+
+    $filterSql = '';
+    $params = [];
+    if ($query !== '') {
+        $filterSql = " AND (o.titre LIKE ? OR m.nom_matiere LIKE ?) ";
+        $like = '%' . $query . '%';
+        $params[] = $like;
+        $params[] = $like;
+    }
+
+    $ownerSql = '';
+    if ($scope === 'teacher' && $userRole === 'teacher') {
+        $ownerSql = " AND e.id_utilisateur = ? ";
+        $params[] = $userId;
+    }
+
+    $sql = "
+        SELECT
+            o.id_offre,
+            o.titre,
+            COALESCE(NULLIF(m.nom_matiere, ''), o.titre) as nom_matiere,
+            CONCAT(prof.prenom, ' ', prof.nom) as nom_professeur,
+            prof.photo_url as photo_professeur,
+            MIN(c.tarif_horaire) as tarif_min,
+            GROUP_CONCAT(DISTINCT c.mode_propose) as modes,
+            COUNT(c.id_creneau) as total_slots
+        FROM offre_cours o
+        INNER JOIN enseigner e ON e.id_offre = o.id_offre AND e.actif = 1
+        INNER JOIN users prof ON e.id_utilisateur = prof.id
+        LEFT JOIN couvrir co ON o.id_offre = co.id_offre
+        LEFT JOIN matiere m ON co.id_matiere = m.id_matiere
+        INNER JOIN creneau c ON c.id_offre = o.id_offre
+        WHERE prof.role = 'teacher'
+          AND c.statut_creneau = 'disponible'
+          AND c.date_debut > NOW()
+          {$filterSql}
+          {$ownerSql}
+        GROUP BY o.id_offre
+        ORDER BY total_slots DESC
+        LIMIT 20
+    ";
+    $stmt = $conn->prepare($sql);
+    $stmt->execute($params);
+    $courses = $stmt->fetchAll();
+
+    echo json_encode([
+        'success' => true,
+        'courses' => $courses
+    ]);
+}
+
+function updateCourseStatus($conn, $teacherId)
+{
+    $reservationId = (int)($_POST['reservation_id'] ?? 0);
+    $newStatus = $_POST['statut'] ?? '';
+
+    if (!$reservationId || !in_array($newStatus, ['en_attente', 'confirmee', 'terminee', 'annulee', 'en_cours'], true)) {
+        http_response_code(400);
+        echo json_encode(['success' => false, 'error' => 'Paramètres invalides']);
+        return;
+    }
+
+    $stmt = $conn->prepare("
+        SELECT r.id_reservation, r.statut_reservation, c.date_debut, c.date_fin
+        FROM reservation r
+        INNER JOIN creneau c ON r.id_creneau = c.id_creneau
+        WHERE r.id_reservation = ? AND c.id_utilisateur = ?
+    ");
+    $stmt->execute([$reservationId, $teacherId]);
+    $reservation = $stmt->fetch();
+
+    if (!$reservation) {
+        http_response_code(404);
+        echo json_encode(['success' => false, 'error' => 'Réservation introuvable']);
+        return;
+    }
+
+    $stmt = $conn->prepare("UPDATE reservation SET statut_reservation = ? WHERE id_reservation = ?");
+    $stmt->execute([$newStatus, $reservationId]);
+
+    $statusCourse = compute_course_status($reservation['date_debut'], $reservation['date_fin'], $newStatus);
+
+    echo json_encode([
+        'success' => true,
+        'reservation_id' => $reservationId,
+        'statut_reservation' => $newStatus,
+        'statut_cours' => $statusCourse
     ]);
 }
 
@@ -352,8 +551,8 @@ function bookSlot($conn, $userId)
         return;
     }
 
-    $modesPropose = explode(',', $creneau['mode_propose']);
-    if (!in_array($modeChoisi, $modesPropose)) {
+    $modesPropose = array_filter(array_map('trim', explode(',', $creneau['mode_propose'])));
+    if (!in_array($modeChoisi, $modesPropose, true)) {
         http_response_code(400);
         echo json_encode(['success' => false, 'error' => 'Ce mode n\'est pas proposé pour ce créneau']);
         return;
@@ -362,14 +561,13 @@ function bookSlot($conn, $userId)
     $prixHoraire = $creneau['tarif_horaire'];
     $dureeHeures = $creneau['duree_heures'];
     $montantHT = $prixHoraire * $dureeHeures;
-    $tauxTVA = 0.20;
-    $montantTVA = $montantHT * $tauxTVA;
-    $montantTTC = $montantHT + $montantTVA;
+    $tauxTVA = 20.00;
+    $montantTTC = $montantHT * (1 + $tauxTVA / 100);
 
     $sql = "
         INSERT INTO reservation
-        (id_utilisateur, id_creneau, mode_choisi, prix_fige, montant_ht, taux_tva, montant_tva, montant_ttc, statut_reservation)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'en_attente')
+        (id_utilisateur, id_creneau, mode_choisi, prix_fige, tva, statut_reservation)
+        VALUES (?, ?, ?, ?, ?, 'en_attente')
     ";
 
     $stmt = $conn->prepare($sql);
@@ -377,14 +575,21 @@ function bookSlot($conn, $userId)
         $userId,
         $creneauId,
         $modeChoisi,
-        $prixHoraire,
         $montantHT,
-        $tauxTVA,
-        $montantTVA,
-        $montantTTC
+        $tauxTVA
     ]);
 
     $reservationId = $conn->lastInsertId();
+
+    $conversationSql = "
+        INSERT INTO conversation (id_reservation)
+        SELECT ? FROM DUAL
+        WHERE NOT EXISTS (
+            SELECT 1 FROM conversation WHERE id_reservation = ?
+        )
+    ";
+    $stmt = $conn->prepare($conversationSql);
+    $stmt->execute([$reservationId, $reservationId]);
 
     $updateSql = "UPDATE creneau SET statut_creneau = 'reserve' WHERE id_creneau = ?";
     $stmt = $conn->prepare($updateSql);
@@ -430,7 +635,21 @@ function createSlot($conn, $userId)
         return;
     }
 
-    $stmt = $conn->prepare("SELECT id_offre FROM offre_cours WHERE id_offre = ? AND id_utilisateur = ?");
+    $allowedModes = ['presentiel', 'visio', 'domicile'];
+    $modes = array_filter(array_map('trim', explode(',', $modePropose)));
+    $modes = array_values(array_unique(array_intersect($modes, $allowedModes)));
+    if (empty($modes)) {
+        http_response_code(400);
+        echo json_encode(['success' => false, 'error' => 'Mode de cours invalide']);
+        return;
+    }
+    $modePropose = implode(',', $modes);
+
+    $stmt = $conn->prepare("
+        SELECT id
+        FROM enseigner
+        WHERE id_offre = ? AND id_utilisateur = ? AND actif = 1
+    ");
     $stmt->execute([$offreId, $userId]);
     if (!$stmt->fetch()) {
         http_response_code(403);

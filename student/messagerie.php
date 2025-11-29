@@ -3,6 +3,7 @@ require_once __DIR__ . '/../includes/helpers.php';
 require_role('student');
 $pageTitle = 'Messagerie - Prof-IT';
 $currentNav = 'student_messagerie';
+$currentUserId = $_SESSION['user_id'] ?? 0;
 ?>
 <!DOCTYPE html>
 <html lang="fr">
@@ -49,15 +50,29 @@ $currentNav = 'student_messagerie';
                 <div class="chat-main">
                     <div class="p-3 border-bottom bg-white" id="chat-header">
                         <div class="d-flex align-items-center gap-3">
-                            <img src="https://ui-avatars.com/api/?name=Marie+Dubois&background=3b82f6&color=fff"
+                            <img src="https://ui-avatars.com/api/?name=Contact&background=3b82f6&color=fff"
                                 class="rounded-circle" width="48" height="48" alt="Avatar" id="chat-header-avatar">
                             <div class="flex-grow-1">
-                                <h6 class="mb-0 fw-semibold" id="chat-header-name">Prof. Marie Dubois</h6>
-                                <small class="text-muted" id="chat-header-subject">Mathématiques</small>
+                                <h6 class="mb-0 fw-semibold" id="chat-header-name">Sélectionnez un contact</h6>
+                                <small class="text-muted" id="chat-header-subject">Aucune matière</small>
                             </div>
-                            <button class="btn btn-sm btn-outline-secondary">
-                                <i class="fas fa-ellipsis-v"></i>
-                            </button>
+                            <div class="dropdown">
+                                <button class="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                    <i class="fas fa-ellipsis-v"></i>
+                                </button>
+                                <ul class="dropdown-menu dropdown-menu-end">
+                                    <li>
+                                        <button class="dropdown-item" type="button" id="open-review-modal">
+                                            <i class="fas fa-star me-2"></i>Noter ce cours
+                                        </button>
+                                    </li>
+                                    <li>
+                                        <button class="dropdown-item text-danger" type="button" id="delete-conversation">
+                                            <i class="fas fa-trash-alt me-2"></i>Supprimer la conversation
+                                        </button>
+                                    </li>
+                                </ul>
+                            </div>
                         </div>
                     </div>
 
@@ -72,7 +87,7 @@ $currentNav = 'student_messagerie';
 
                     <div class="p-3 border-top bg-white">
                         <div class="input-group">
-                            <button class="btn btn-outline-secondary" type="button" title="Joindre un fichier">
+                            <button class="btn btn-outline-secondary" type="button" title="Joindre un fichier" id="attach-btn">
                                 <i class="fas fa-paperclip"></i>
                             </button>
                             <input type="text" class="form-control"
@@ -83,9 +98,47 @@ $currentNav = 'student_messagerie';
                                 <i class="fas fa-paper-plane"></i>
                             </button>
                         </div>
+                        <input type="file" id="attachment-input" style="display:none"
+                            accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.png,.jpg,.jpeg">
+                        <div class="small text-muted mt-2" id="attachment-name"></div>
                     </div>
                 </div>
             </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="review-modal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <form class="modal-content" id="review-form">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="fas fa-star me-2 text-warning"></i>Laisser un avis</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="review-alert" class="alert d-none" role="alert"></div>
+                    <div class="mb-3">
+                        <label for="review-note" class="form-label">Note</label>
+                        <select class="form-select" id="review-note" required>
+                            <option value="">Choisir...</option>
+                            <option value="5">5 - Excellent</option>
+                            <option value="4">4 - Très bien</option>
+                            <option value="3">3 - Correct</option>
+                            <option value="2">2 - Moyen</option>
+                            <option value="1">1 - À améliorer</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="review-comment" class="form-label">Commentaire (optionnel)</label>
+                        <textarea class="form-control" id="review-comment" rows="3" placeholder="Partagez votre retour d'expérience..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Annuler</button>
+                    <button type="submit" class="btn btn-primary" id="review-submit">
+                        <i class="fas fa-paper-plane me-1"></i>Envoyer mon avis
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
 
@@ -99,14 +152,34 @@ $currentNav = 'student_messagerie';
             const sendBtn = document.getElementById('send-message');
             const searchInput = document.getElementById('search-conversations');
             const chatHeader = document.getElementById('chat-header');
+            const attachmentInput = document.getElementById('attachment-input');
+            const attachmentName = document.getElementById('attachment-name');
+            const attachBtn = document.getElementById('attach-btn');
+            const deleteConversationBtn = document.getElementById('delete-conversation');
+            const openReviewBtn = document.getElementById('open-review-modal');
+            const reviewModalEl = document.getElementById('review-modal');
+            const reviewForm = document.getElementById('review-form');
+            const reviewNote = document.getElementById('review-note');
+            const reviewComment = document.getElementById('review-comment');
+            const reviewAlert = document.getElementById('review-alert');
+            const reviewSubmitBtn = document.getElementById('review-submit');
+            const reviewModal = reviewModalEl ? new bootstrap.Modal(reviewModalEl) : null;
+            const csrfToken = '<?= csrf_token() ?>';
 
             let conversations = [];
             let currentConversation = null;
             let currentMessages = [];
+            const REFRESH_INTERVAL = 5000;
 
-            loadConversations();
+            loadConversations(true);
+            setInterval(() => {
+                loadConversations(false);
+                if (currentConversation) {
+                    loadMessages(currentConversation);
+                }
+            }, REFRESH_INTERVAL);
 
-            async function loadConversations() {
+            async function loadConversations(autoSelectFirst = true) {
                 try {
                     const response = await fetch('../api/messaging.php?action=conversations');
                     const data = await response.json();
@@ -115,8 +188,9 @@ $currentNav = 'student_messagerie';
                         conversations = data.conversations;
                         renderConversations(conversations);
 
-                        if (conversations.length > 0) {
-                            loadMessages(conversations[0].id_conversation);
+                        if (conversations.length > 0 && (!currentConversation || autoSelectFirst)) {
+                            const initialConversation = currentConversation ?? conversations[0].id_conversation;
+                            loadMessages(initialConversation);
                         }
                     } else {
                         showEmptyConversations();
@@ -138,17 +212,18 @@ $currentNav = 'student_messagerie';
                         `<span class="badge bg-primary rounded-pill mt-1">${conv.nb_non_lus}</span>` :
                         '';
                     const unreadClass = conv.nb_non_lus > 0 ? 'unread' : '';
-                    const activeClass = index === 0 ? 'active' : '';
+                    const isActive = currentConversation ? (conv.id_conversation == currentConversation) : (index === 0);
+                    const activeClass = isActive ? 'active' : '';
 
                     return `
                         <div class="conversation-item ${unreadClass} ${activeClass}"
-                             data-conversation="${conv.id_conversation}"
-                             data-contact="${escapeHtml(conv.contact_nom)}"
-                             data-photo="${escapeHtml(conv.contact_photo || '')}"
-                             data-subject="${escapeHtml(conv.nom_matiere || 'Cours')}">
+                            data-conversation="${conv.id_conversation}"
+                            data-contact="${escapeHtml(conv.contact_nom)}"
+                            data-photo="${escapeHtml(conv.contact_photo || '')}"
+                            data-subject="${escapeHtml(conv.nom_matiere || 'Cours')}">
                             <div class="d-flex align-items-start gap-3">
                                 <img src="${conv.contact_photo ? '../' + escapeHtml(conv.contact_photo) : getAvatarUrl(conv.contact_nom)}"
-                                     class="rounded-circle" width="48" height="48" alt="Avatar" style="object-fit: cover;">
+                                    class="rounded-circle" width="48" height="48" alt="Avatar" style="object-fit: cover;">
                                 <div class="flex-grow-1 overflow-hidden">
                                     <div class="d-flex justify-content-between align-items-start mb-1">
                                         <h6 class="mb-0 fw-semibold">Prof. ${escapeHtml(conv.contact_nom)}</h6>
@@ -181,6 +256,7 @@ $currentNav = 'student_messagerie';
             }
 
             async function loadMessages(conversationId) {
+                currentConversation = conversationId;
                 try {
                     document.querySelectorAll('.conversation-item').forEach(item => {
                         item.classList.remove('active');
@@ -196,22 +272,26 @@ $currentNav = 'student_messagerie';
                     const data = await response.json();
 
                     if (data.success && data.messages) {
-                        currentConversation = conversationId;
                         currentMessages = data.messages;
                         renderMessages(data.messages);
                         updateChatHeader(conversationId);
 
                         markAsRead(conversationId);
                     } else {
-                        messagesContainer.innerHTML = `
-                            <div class="text-center py-5 text-muted">
-                                <p>Erreur lors du chargement des messages</p>
-                            </div>
-                        `;
+                        showMessagesError();
                     }
                 } catch (error) {
                     console.error('Erreur chargement messages:', error);
+                    showMessagesError();
                 }
+            }
+
+            function showMessagesError() {
+                messagesContainer.innerHTML = `
+                    <div class="text-center py-5 text-muted">
+                        <p>Erreur lors du chargement des messages</p>
+                    </div>
+                `;
             }
 
             function renderMessages(messages) {
@@ -226,7 +306,7 @@ $currentNav = 'student_messagerie';
                 }
 
                 messagesContainer.innerHTML = messages.map(msg => {
-                    const isSent = msg.id_utilisateur == <?= $userId ?? 0 ?>;
+                    const isSent = msg.id_utilisateur == <?= (int)$currentUserId ?>;
                     const avatarUrl = msg.auteur_photo ?
                         '../' + escapeHtml(msg.auteur_photo) :
                         getAvatarUrl(msg.auteur_nom);
@@ -237,6 +317,7 @@ $currentNav = 'student_messagerie';
                                 <div class="d-flex align-items-end gap-2 justify-content-end">
                                     <div class="text-end">
                                         <div class="message-bubble sent">${escapeHtml(msg.contenu)}</div>
+                                        ${renderAttachment(msg)}
                                         <small class="text-muted me-2">${formatMessageDate(msg.date_envoi)}</small>
                                     </div>
                                     <img src="${avatarUrl}" class="rounded-circle" width="32" height="32" alt="Avatar" style="object-fit: cover;">
@@ -250,6 +331,7 @@ $currentNav = 'student_messagerie';
                                     <img src="${avatarUrl}" class="rounded-circle" width="32" height="32" alt="Avatar" style="object-fit: cover;">
                                     <div>
                                         <div class="message-bubble received">${escapeHtml(msg.contenu)}</div>
+                                        ${renderAttachment(msg)}
                                         <small class="text-muted ms-2">${formatMessageDate(msg.date_envoi)}</small>
                                     </div>
                                 </div>
@@ -280,7 +362,7 @@ $currentNav = 'student_messagerie';
                 const formData = new FormData();
                 formData.append('action', 'mark_as_read');
                 formData.append('conversation_id', conversationId);
-                formData.append('csrf_token', '<?= csrf_token() ?>');
+                formData.append('csrf_token', csrfToken);
 
                 try {
                     await fetch('../api/messaging.php', {
@@ -294,13 +376,17 @@ $currentNav = 'student_messagerie';
 
             async function sendMessage() {
                 const text = messageInput.value.trim();
-                if (!text || !currentConversation) return;
+                const file = attachmentInput?.files[0];
+                if ((!text && !file) || !currentConversation) return;
 
                 const formData = new FormData();
                 formData.append('action', 'send_message');
                 formData.append('conversation_id', currentConversation);
                 formData.append('contenu', text);
-                formData.append('csrf_token', '<?= csrf_token() ?>');
+                if (file) {
+                    formData.append('fichier_joint', file);
+                }
+                formData.append('csrf_token', csrfToken);
 
                 try {
                     sendBtn.disabled = true;
@@ -313,6 +399,10 @@ $currentNav = 'student_messagerie';
 
                     if (data.success) {
                         messageInput.value = '';
+                        if (attachmentInput) {
+                            attachmentInput.value = '';
+                            attachmentName.textContent = '';
+                        }
                         await loadMessages(currentConversation);
                     } else {
                         alert('Erreur lors de l\'envoi du message: ' + (data.error || 'Erreur inconnue'));
@@ -325,6 +415,90 @@ $currentNav = 'student_messagerie';
                 }
             }
 
+            async function deleteConversation() {
+                if (!currentConversation) {
+                    alert('Sélectionnez une conversation.');
+                    return;
+                }
+
+                if (!confirm('Supprimer définitivement cette conversation ?')) {
+                    return;
+                }
+
+                const formData = new FormData();
+                formData.append('action', 'delete_conversation');
+                formData.append('conversation_id', currentConversation);
+                formData.append('csrf_token', csrfToken);
+
+                try {
+                    const response = await fetch('../api/messaging.php', {
+                        method: 'POST',
+                        body: formData
+                    });
+                    const data = await response.json();
+                    if (data.success) {
+                        currentConversation = null;
+                        messagesContainer.innerHTML = `
+                            <div class="text-center py-5 text-muted">
+                                <i class="fas fa-comments fa-3x mb-3"></i>
+                                <p>Sélectionnez une conversation pour voir les messages</p>
+                            </div>
+                        `;
+                        loadConversations(true);
+                    } else {
+                        alert(data.error || 'Impossible de supprimer la conversation.');
+                    }
+                } catch (error) {
+                    console.error('Erreur suppression conversation:', error);
+                    alert('Erreur lors de la suppression de la conversation.');
+                }
+            }
+
+            openReviewBtn?.addEventListener('click', function() {
+                if (!currentConversation) {
+                    alert('Sélectionnez une conversation à noter.');
+                    return;
+                }
+                reviewForm?.reset();
+                setReviewMessage('');
+                reviewModal?.show();
+            });
+
+            reviewForm?.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                if (!currentConversation || !reviewNote?.value) {
+                    setReviewMessage('Choisissez une note avant d\'envoyer votre avis.', 'danger');
+                    return;
+                }
+
+                const formData = new FormData();
+                formData.append('action', 'submit_review');
+                formData.append('conversation_id', currentConversation);
+                formData.append('note', reviewNote.value);
+                formData.append('commentaire', reviewComment?.value || '');
+                formData.append('csrf_token', csrfToken);
+
+                try {
+                    reviewSubmitBtn.disabled = true;
+                    const response = await fetch('../api/messaging.php', {
+                        method: 'POST',
+                        body: formData
+                    });
+                    const data = await response.json();
+                    if (data.success) {
+                        setReviewMessage('Merci pour votre avis !', 'success');
+                        setTimeout(() => reviewModal?.hide(), 900);
+                    } else {
+                        setReviewMessage(data.error || 'Impossible d\'enregistrer votre avis.', 'danger');
+                    }
+                } catch (error) {
+                    console.error('Erreur avis:', error);
+                    setReviewMessage('Erreur réseau lors de l\'envoi.', 'danger');
+                } finally {
+                    reviewSubmitBtn.disabled = false;
+                }
+            });
+
             sendBtn.addEventListener('click', sendMessage);
             messageInput.addEventListener('keypress', function(e) {
                 if (e.key === 'Enter') {
@@ -332,6 +506,20 @@ $currentNav = 'student_messagerie';
                     sendMessage();
                 }
             });
+
+            attachBtn?.addEventListener('click', function() {
+                attachmentInput?.click();
+            });
+
+            attachmentInput?.addEventListener('change', function() {
+                if (attachmentInput.files[0]) {
+                    attachmentName.textContent = 'Pièce jointe : ' + attachmentInput.files[0].name;
+                } else {
+                    attachmentName.textContent = '';
+                }
+            });
+
+            deleteConversationBtn?.addEventListener('click', deleteConversation);
 
             searchInput.addEventListener('input', function() {
                 const searchTerm = this.value.toLowerCase();
@@ -405,6 +593,31 @@ $currentNav = 'student_messagerie';
                             minute: '2-digit'
                         });
                 }
+            }
+
+            function renderAttachment(msg) {
+                if (!msg.fichier_joint) {
+                    return '';
+                }
+                const name = msg.document_nom || 'Télécharger';
+                return `
+                    <div class="mt-2">
+                        <a href="../${escapeHtml(msg.fichier_joint)}" target="_blank">
+                            <i class="fas fa-paperclip me-1"></i>${escapeHtml(name)}
+                        </a>
+                    </div>
+                `;
+            }
+
+            function setReviewMessage(message, type = 'success') {
+                if (!reviewAlert) return;
+                if (!message) {
+                    reviewAlert.classList.add('d-none');
+                    return;
+                }
+                reviewAlert.className = 'alert alert-' + type;
+                reviewAlert.textContent = message;
+                reviewAlert.classList.remove('d-none');
             }
         });
     </script>

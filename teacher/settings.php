@@ -153,7 +153,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                     <form method="post" action="upload_avatar.php" enctype="multipart/form-data" id="uploadAvatarForm">
                                         <?= csrf_field() ?>
                                         <div class="input-group">
-                                            <input type="file" class="form-control" name="avatar" accept="image/*" required>
+                                            <input type="file" class="form-control" name="avatar" accept="image/*">
                                             <button type="submit" class="btn btn-primary">
                                                 <i class="fas fa-cloud-upload-alt me-1"></i>Télécharger
                                             </button>

@@ -30,13 +30,51 @@ $userId = $_SESSION['user_id'] ?? null;
             <div class="col-lg-8">
                 <div class="card-custom mb-4">
                     <div class="card-header-custom">
+                        <h5><i class="fas fa-search me-2"></i>Rechercher un cours</h5>
+                    </div>
+                    <div class="card-body-custom">
+                        <div class="input-group mb-3">
+                            <span class="input-group-text bg-white"><i class="fas fa-search text-muted"></i></span>
+                            <input type="text" class="form-control" id="course-search-input" placeholder="Ex : Mathématiques, Anglais, Programmation..." autocomplete="off">
+                        </div>
+                        <div class="mb-3">
+                            <small class="text-muted d-block mb-2">Suggestions populaires :</small>
+                            <div class="d-flex flex-wrap gap-2" id="course-suggestions">
+                                <button type="button" class="btn btn-sm btn-outline-primary course-suggestion">Mathématiques</button>
+                                <button type="button" class="btn btn-sm btn-outline-primary course-suggestion">Physique</button>
+                                <button type="button" class="btn btn-sm btn-outline-primary course-suggestion">Anglais</button>
+                                <button type="button" class="btn btn-sm btn-outline-primary course-suggestion">Programmation</button>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <h6 class="mb-0 text-muted">Résultats</h6>
+                                <small class="text-muted" id="course-results-count"></small>
+                            </div>
+                            <div id="course-search-results">
+                                <p class="text-muted mb-0">Commencez à saisir un mot clé pour trouver un cours.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card-custom mb-4">
+                    <div class="card-header-custom">
                         <h5><i class="fas fa-calendar-alt me-2"></i>Calendrier des disponibilités</h5>
                     </div>
                     <div class="card-body-custom">
                         <div class="row">
                         <div class="col-md-6">
-                            <h5>Prochaines disponibilités</h5>
-                            <div class="time-slots mt-3">
+                            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                                <h5 class="mb-0">Prochaines disponibilités</h5>
+                                <div class="d-flex align-items-center gap-2" id="selected-course-banner" style="display:none;">
+                                    <span class="badge rounded-pill bg-primary" id="selected-course-label"></span>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary" id="clear-course-selection">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="time-slots mt-3" id="slots-wrapper">
                                 <div class="row" id="slots-container">
                                     <div class="text-center py-4 text-muted w-100">
                                         <div class="spinner-border spinner-border-sm text-primary" role="status">
@@ -112,6 +150,32 @@ $userId = $_SESSION['user_id'] ?? null;
                             </div>
                         </div>
                     </div>
+            </div>
+        </div>
+        <div class="row mt-4">
+            <div class="col-12">
+                <div class="card-custom">
+                    <div class="card-header-custom">
+                        <h5><i class="fas fa-list me-2"></i>Gestion de mes rendez-vous</h5>
+                    </div>
+                    <div class="card-body-custom">
+                        <div class="row row-cols-1 row-cols-lg-2 g-4">
+                            <div class="col">
+                                <div class="border rounded-3 p-3 h-100">
+                        <h6 class="text-muted mb-3">À venir</h6>
+                        <div id="student-manage-upcoming-empty" class="text-muted small">Aucun rendez-vous planifié.</div>
+                        <div id="student-manage-upcoming-list" class="rdv-manage-list mt-3"></div>
+                                </div>
+                            </div>
+                            <div class="col">
+                                <div class="border rounded-3 p-3 h-100">
+                                    <h6 class="text-muted mb-3">Historique</h6>
+                                    <div id="student-manage-history-empty" class="text-muted small">Aucun rendez-vous terminé.</div>
+                                    <div id="student-manage-history-list" class="rdv-manage-list mt-3"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -123,36 +187,104 @@ $userId = $_SESSION['user_id'] ?? null;
         document.addEventListener('DOMContentLoaded', function() {
             let availableSlots = [];
             let selectedSlot = null;
+            let studentUpcomingAppointments = [];
+            let studentHistoryAppointments = [];
+            const studentManageUpcomingList = document.getElementById('student-manage-upcoming-list');
+            const studentManageHistoryList = document.getElementById('student-manage-history-list');
+            const studentManageUpcomingEmpty = document.getElementById('student-manage-upcoming-empty');
+            const studentManageHistoryEmpty = document.getElementById('student-manage-history-empty');
+            const courseSearchInput = document.getElementById('course-search-input');
+            const courseSearchResults = document.getElementById('course-search-results');
+            const courseResultsCount = document.getElementById('course-results-count');
+            const courseSuggestions = document.querySelectorAll('.course-suggestion');
+            const selectedCourseBanner = document.getElementById('selected-course-banner');
+            const selectedCourseLabel = document.getElementById('selected-course-label');
+            const clearCourseSelectionBtn = document.getElementById('clear-course-selection');
+            let selectedOfferId = null;
+            let selectedCourseName = '';
 
             loadAvailableSlots();
+            performCourseSearch();
             loadUpcomingAppointments();
+            loadHistoryAppointments();
             loadStats();
 
-            async function loadAvailableSlots() {
+            courseSearchInput?.addEventListener('input', debounce(function(event) {
+                performCourseSearch(event.target.value.trim());
+            }, 300));
+
+            courseSuggestions.forEach(button => {
+                button.addEventListener('click', function() {
+                    const value = this.textContent.trim();
+                    if (courseSearchInput) {
+                        courseSearchInput.value = value;
+                    }
+                    performCourseSearch(value);
+                });
+            });
+
+            courseSearchResults?.addEventListener('click', function(event) {
+                const btn = event.target.closest('.select-course-btn');
+                if (!btn) return;
+                const offerId = btn.dataset.offerId;
+                if (!offerId) return;
+                selectedOfferId = offerId;
+                selectedCourseName = btn.dataset.courseName || '';
+                loadAvailableSlots(selectedOfferId);
+            });
+
+            clearCourseSelectionBtn?.addEventListener('click', () => {
+                selectedOfferId = null;
+                selectedCourseName = '';
+                loadAvailableSlots();
+            });
+
+            async function loadAvailableSlots(offerId = null) {
+                if (!offerId) {
+                    availableSlots = [];
+                    renderSlots([]);
+                    updateSelectedCourseBanner();
+                    return;
+                }
                 try {
-                    const response = await fetch('../api/appointments.php?action=available_slots');
+                    const url = `../api/appointments.php?action=available_slots&offre_id=${encodeURIComponent(offerId)}`;
+                    const response = await fetch(url);
                     const data = await response.json();
 
                     if (data.success && data.slots) {
                         availableSlots = data.slots;
                         renderSlots(data.slots);
+                        updateSelectedCourseBanner();
                     } else {
-                        showEmptySlots();
+                        showEmptySlots(true);
                     }
                 } catch (error) {
                     console.error('Erreur chargement créneaux:', error);
-                    showEmptySlots();
+                    showEmptySlots(true);
                 }
             }
 
             function renderSlots(slots) {
                 const container = document.getElementById('slots-container');
+                const wrapper = document.getElementById('slots-wrapper');
 
-                if (slots.length === 0) {
-                    showEmptySlots();
+                if (!selectedOfferId) {
+                    if (wrapper) wrapper.classList.add('disabled');
+                    container.innerHTML = `
+                        <div class="text-center py-5 text-muted w-100">
+                            <i class="fas fa-search fa-3x mb-3"></i>
+                            <p>Sélectionnez un cours pour afficher les créneaux disponibles.</p>
+                        </div>
+                    `;
                     return;
                 }
 
+                if (slots.length === 0) {
+                    showEmptySlots(true);
+                    return;
+                }
+
+                if (wrapper) wrapper.classList.remove('disabled');
                 container.innerHTML = slots.map(slot => {
                     const dateDebut = new Date(slot.date_debut);
                     const dateFin = new Date(slot.date_fin);
@@ -172,17 +304,102 @@ $userId = $_SESSION['user_id'] ?? null;
                 }).join('');
             }
 
-            function showEmptySlots() {
-                document.getElementById('slots-container').innerHTML = `
-                    <div class="text-center py-5 text-muted w-100">
-                        <i class="fas fa-calendar-times fa-3x mb-3"></i>
-                        <p>Aucun créneau disponible pour le moment</p>
-                        <small>Revenez plus tard pour voir les nouvelles disponibilités</small>
-                    </div>
+            function showEmptySlots(hasSelection) {
+                const container = document.getElementById('slots-container');
+                if (hasSelection) {
+                    container.innerHTML = `
+                        <div class="text-center py-5 text-muted w-100">
+                            <i class="fas fa-calendar-times fa-3x mb-3"></i>
+                            <p>Aucun créneau disponible pour ce cours</p>
+                            <small>Essayez un autre cours ou revenez plus tard.</small>
+                        </div>
+                    `;
+                } else {
+                    container.innerHTML = `
+                        <div class="text-center py-5 text-muted w-100">
+                            <i class="fas fa-search fa-3x mb-3"></i>
+                            <p>Sélectionnez un cours pour afficher les créneaux disponibles.</p>
+                        </div>
+                    `;
+                }
+            }
+
+            function performCourseSearch(term = '') {
+                if (!courseSearchResults) return;
+                const query = (term || '').trim();
+                if (query.length < 2) {
+                    courseSearchResults.innerHTML = '<p class="text-muted mb-0">Commencez à saisir un mot clé pour trouver un cours.</p>';
+                    if (courseResultsCount) courseResultsCount.textContent = '';
+                    return;
+                }
+                fetch(`../api/appointments.php?action=search_courses&query=${encodeURIComponent(query)}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (!data.success) {
+                            courseSearchResults.innerHTML = `<p class="text-danger mb-0">${data.error || 'Impossible de charger les cours.'}</p>`;
+                            if (courseResultsCount) courseResultsCount.textContent = '';
+                            return;
+                        }
+                        renderCourseResults(data.courses || []);
+                    })
+                    .catch(error => {
+                        console.error('Recherche cours:', error);
+                        courseSearchResults.innerHTML = '<p class="text-danger mb-0">Erreur lors de la recherche.</p>';
+                        if (courseResultsCount) courseResultsCount.textContent = '';
+                    });
+            }
+
+            function renderCourseResults(courses) {
+                if (!courses.length) {
+                    if (courseSearchResults) {
+                        courseSearchResults.innerHTML = '<p class="text-muted mb-0">Aucun cours trouvé pour cette recherche.</p>';
+                    }
+                    if (courseResultsCount) courseResultsCount.textContent = '0 résultat';
+                    return;
+                }
+                if (courseResultsCount) courseResultsCount.textContent = `${courses.length} résultat(s)`;
+                if (courseSearchResults) {
+                    courseSearchResults.innerHTML = courses.map(renderCourseCard).join('');
+                }
+            }
+
+            function renderCourseCard(course) {
+                const modes = (course.modes || '').split(',').filter(Boolean).map(mode => ucFirst(mode));
+                const modesLabel = modes.length ? modes.join(', ') : 'Modes non spécifiés';
+                const priceLabel = course.tarif_min !== null ? `${Number(course.tarif_min).toFixed(2)}€/h` : 'Tarif à définir';
+                return `
+                    <div class="border rounded-3 p-3 mb-3">
+                        <div class="d-flex flex-wrap gap-3 align-items-center">
+                            <div class="flex-grow-1">
+                                <h6 class="mb-1">${escapeHtml(course.nom_matiere || course.titre || 'Cours')}</h6>
+                                <p class="mb-1 text-muted small"><i class="fas fa-user me-1"></i>${escapeHtml(course.nom_professeur || '')}</p>
+                                <p class="mb-1 text-muted small"><i class="fas fa-clock me-1"></i>${priceLabel}</p>
+                                <p class="mb-0 text-muted small"><i class="fas fa-layer-group me-1"></i>${modesLabel}</p>
+                            </div>
+                            <div class="text-end">
+                                    <span class="badge bg-secondary mb-2">${course.total_slots || 0} créneau(x)</span>
+                                    <button type="button" class="btn btn-sm btn-outline-primary select-course-btn"
+                                    data-offer-id="${course.id_offre}" data-course-name="${escapeHtml(course.nom_matiere || course.titre || 'Cours')}">
+                                        <i class="fas fa-calendar-check me-1"></i>Voir les créneaux
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
                 `;
             }
 
+            function updateSelectedCourseBanner() {
+                if (!selectedCourseBanner || !selectedCourseLabel) return;
+                if (selectedOfferId) {
+                    selectedCourseLabel.textContent = selectedCourseName || 'Cours sélectionné';
+                    selectedCourseBanner.style.display = 'flex';
+                } else {
+                    selectedCourseBanner.style.display = 'none';
+                }
+            }
+
             window.selectTimeSlot = function(slotId) {
+                if (!selectedOfferId) return;
                 selectedSlot = availableSlots.find(s => s.id_creneau == slotId);
                 if (!selectedSlot) return;
 
@@ -217,14 +434,34 @@ $userId = $_SESSION['user_id'] ?? null;
                     const data = await response.json();
 
                     if (data.success && data.appointments) {
-                        renderAppointments(data.appointments);
+                        studentUpcomingAppointments = data.appointments || [];
+                        renderAppointments(studentUpcomingAppointments);
                     } else {
+                        studentUpcomingAppointments = [];
                         showEmptyAppointments();
                     }
                 } catch (error) {
                     console.error('Erreur chargement rendez-vous:', error);
                     showEmptyAppointments();
+                    studentUpcomingAppointments = [];
                 }
+                renderStudentManageLists();
+            }
+
+        async function loadHistoryAppointments() {
+                try {
+                    const response = await fetch('../api/appointments.php?action=history_appointments');
+                    const data = await response.json();
+                    if (data.success && Array.isArray(data.appointments)) {
+                        studentHistoryAppointments = data.appointments;
+                    } else {
+                        studentHistoryAppointments = [];
+                    }
+                } catch (error) {
+                    console.error('Erreur chargement historique student:', error);
+                    studentHistoryAppointments = [];
+                }
+                renderStudentManageLists();
             }
 
             function renderAppointments(appointments) {
@@ -236,11 +473,7 @@ $userId = $_SESSION['user_id'] ?? null;
                 }
 
                 container.innerHTML = appointments.map(appt => {
-                    const statusMap = {
-                        'confirmee': { class: 'confirmed', label: 'Confirmé' },
-                        'en_attente': { class: 'waiting', label: 'En attente' }
-                    };
-                    const status = statusMap[appt.statut_reservation] || { class: 'waiting', label: 'En attente' };
+                    const status = getRdvStatus(appt.statut_reservation);
 
                     const modeIcons = {
                         'presentiel': 'fa-building',
@@ -261,7 +494,8 @@ $userId = $_SESSION['user_id'] ?? null;
                             </div>
                             <p class="mb-1 text-muted small"><i class="fas fa-user me-2"></i>${escapeHtml(appt.nom_professeur)}</p>
                             <p class="mb-1 text-muted small"><i class="fas fa-calendar me-2"></i>${dateTimeStr}</p>
-                            <p class="mb-0 text-muted small"><i class="fas ${modeIcon} me-2"></i>${ucFirst(appt.mode_choisi)}</p>
+                            <p class="mb-1 text-muted small"><i class="fas ${modeIcon} me-2"></i>${ucFirst(appt.mode_choisi)}</p>
+                            <p class="mb-0 text-muted small"><i class="fas fa-flag me-2"></i>${formatCourseStatus(appt.statut_cours)}</p>
                         </div>
                     `;
                 }).join('');
@@ -276,6 +510,50 @@ $userId = $_SESSION['user_id'] ?? null;
                     </div>
                 `;
             }
+
+            function renderStudentManageLists() {
+                renderStudentManageSection(studentManageUpcomingList, studentManageUpcomingEmpty, studentUpcomingAppointments);
+                renderStudentManageSection(studentManageHistoryList, studentManageHistoryEmpty, studentHistoryAppointments);
+            }
+
+            function renderStudentManageSection(container, emptyElement, list) {
+                if (!container || !emptyElement) return;
+                if (!Array.isArray(list) || list.length === 0) {
+                    emptyElement.style.display = '';
+                    container.innerHTML = '';
+                    return;
+                }
+                emptyElement.style.display = 'none';
+                container.innerHTML = list.map(renderStudentManageItem).join('');
+            }
+
+            function renderStudentManageItem(appt) {
+                const status = getRdvStatus(appt.statut_reservation);
+                const dateDebut = new Date(appt.date_debut);
+                const dateFin = new Date(appt.date_fin);
+                const modeIcons = {
+                    'presentiel': 'fa-building',
+                    'visio': 'fa-video',
+                    'domicile': 'fa-home'
+                };
+                const modeIcon = modeIcons[appt.mode_choisi] || 'fa-question';
+
+                return `
+                    <div class="border rounded p-3 mb-3">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <strong>${escapeHtml(appt.nom_matiere || appt.titre_cours)}</strong>
+                                <p class="mb-1 text-muted small"><i class="fas fa-user me-1"></i>${escapeHtml(appt.nom_professeur || '')}</p>
+                                <p class="mb-1 text-muted small"><i class="fas fa-calendar me-1"></i>${formatDateTimeFr(dateDebut)} - ${formatTime(dateFin)}</p>
+                                <p class="mb-1 text-muted small"><i class="fas ${modeIcon} me-1"></i>${ucFirst(appt.mode_choisi)}</p>
+                                <p class="mb-0 text-muted small"><i class="fas fa-flag me-1"></i>${formatCourseStatus(appt.statut_cours)}</p>
+                            </div>
+                            <span class="badge-status ${status.class}">${status.label}</span>
+                        </div>
+                    </div>
+                `;
+            }
+
 
             async function loadStats() {
                 try {
@@ -305,6 +583,22 @@ $userId = $_SESSION['user_id'] ?? null;
                         </div>
                     </div>
                 `;
+            }
+
+            function getRdvStatus(status) {
+                const map = {
+                    'confirmee': { class: 'confirmed', label: 'Confirmé' },
+                    'en_attente': { class: 'waiting', label: 'En attente' },
+                    'en_cours': { class: 'in-progress', label: 'En cours' },
+                    'terminee': { class: 'finished', label: 'Terminé' }
+                };
+                return map[status] || { class: 'waiting', label: 'En attente' };
+            }
+
+            function formatCourseStatus(status) {
+                if (status === 'en_cours') return 'En cours';
+                if (status === 'termine') return 'Terminé';
+                return 'À venir';
             }
 
             document.getElementById('booking-form').addEventListener('submit', async function(e) {
@@ -390,6 +684,14 @@ $userId = $_SESSION['user_id'] ?? null;
 
             function ucFirst(str) {
                 return str.charAt(0).toUpperCase() + str.slice(1);
+            }
+
+            function debounce(fn, delay) {
+                let timeout;
+                return function(...args) {
+                    clearTimeout(timeout);
+                    timeout = setTimeout(() => fn.apply(this, args), delay);
+                };
             }
         });
     </script>
