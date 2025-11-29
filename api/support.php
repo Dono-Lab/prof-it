@@ -46,6 +46,20 @@ function handleGetRequest($conn, $userId) {
             getStats($conn, $userId);
             break;
 
+        case 'ticket_details':
+            $ticketId = isset($_GET['ticket_id']) ? (int)$_GET['ticket_id'] : 0;
+            if ($ticketId <= 0) {
+                http_response_code(400);
+                echo json_encode(['success' => false, 'error' => 'ID ticket invalide']);
+                return;
+            }
+            getTicketDetails($conn, $userId, $ticketId);
+            break;
+
+        case 'reply_ticket':
+            replyTicket($conn, $userId);
+            break;
+
         default:
             http_response_code(400);
             echo json_encode(['success' => false, 'error' => 'Action invalide']);
@@ -127,6 +141,53 @@ function getStats($conn, $userId) {
     ]);
 }
 
+function getTicketDetails($conn, $userId, $ticketId) {
+    $stmt = $conn->prepare("
+        SELECT
+            id_ticket,
+            sujet,
+            categorie,
+            priorite,
+            statut_ticket,
+            cree_le,
+            dernier_message,
+            ferme_le
+        FROM ticket_support
+        WHERE id_ticket = ? AND id_utilisateur = ?
+    ");
+    $stmt->execute([$ticketId, $userId]);
+    $ticket = $stmt->fetch();
+
+    if (!$ticket) {
+        http_response_code(404);
+        echo json_encode(['success' => false, 'error' => 'Ticket introuvable']);
+        return;
+    }
+
+    $stmtMessages = $conn->prepare("
+        SELECT
+            mt.id_message_ticket,
+            mt.contenu,
+            mt.date_envoi,
+            mt.est_admin,
+            mt.fichier_joint,
+            CONCAT(u.prenom, ' ', u.nom) as auteur,
+            u.role
+        FROM message_ticket mt
+        JOIN users u ON mt.id_utilisateur = u.id
+        WHERE mt.id_ticket = ?
+        ORDER BY mt.date_envoi ASC
+    ");
+    $stmtMessages->execute([$ticketId]);
+    $messages = $stmtMessages->fetchAll();
+
+    echo json_encode([
+        'success' => true,
+        'ticket' => $ticket,
+        'messages' => $messages
+    ]);
+}
+
 function createTicket($conn, $userId) {
     $sujet = trim($_POST['sujet'] ?? '');
     $categorie = trim($_POST['categorie'] ?? '');
@@ -181,5 +242,53 @@ function createTicket($conn, $userId) {
         'success' => true,
         'message' => 'Ticket créé avec succès',
         'ticket_id' => $ticketId
+    ]);
+}
+
+function replyTicket($conn, $userId) {
+    $ticketId = (int)($_POST['ticket_id'] ?? 0);
+    $message = trim($_POST['message'] ?? '');
+
+    if (!$ticketId || $message === '' || strlen($message) < 3) {
+        http_response_code(400);
+        echo json_encode(['success' => false, 'error' => 'Message trop court ou ticket invalide']);
+        return;
+    }
+
+    $stmt = $conn->prepare("SELECT id_ticket, statut_ticket FROM ticket_support WHERE id_ticket = ? AND id_utilisateur = ?");
+    $stmt->execute([$ticketId, $userId]);
+    $ticket = $stmt->fetch();
+
+    if (!$ticket) {
+        http_response_code(404);
+        echo json_encode(['success' => false, 'error' => 'Ticket introuvable']);
+        return;
+    }
+
+    $stmt = $conn->prepare("
+        INSERT INTO message_ticket (id_ticket, id_utilisateur, contenu, est_admin)
+        VALUES (?, ?, ?, 0)
+    ");
+    $stmt->execute([$ticketId, $userId, $message]);
+
+    $stmtUser = $conn->prepare("SELECT CONCAT(prenom, ' ', nom) as nom_complet FROM users WHERE id = ?");
+    $stmtUser->execute([$userId]);
+    $user = $stmtUser->fetch();
+
+    $conn->prepare("
+        UPDATE ticket_support
+        SET dernier_message = NOW(),
+            statut_ticket = CASE WHEN statut_ticket IN ('resolu', 'ferme') THEN 'en_cours' ELSE statut_ticket END
+        WHERE id_ticket = ?
+    ")->execute([$ticketId]);
+
+    echo json_encode([
+        'success' => true,
+        'message' => [
+            'contenu' => $message,
+            'date_envoi' => date('Y-m-d H:i:s'),
+            'est_admin' => 0,
+            'auteur' => $user['nom_complet'] ?? 'Vous'
+        ]
     ]);
 }

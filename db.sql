@@ -100,7 +100,7 @@ CREATE TABLE creneau (
     date_debut DATETIME NOT NULL,
     date_fin DATETIME NOT NULL,
     tarif_horaire DECIMAL(10, 2) NOT NULL,
-    mode_propose ENUM('presentiel', 'visio', 'les_deux') DEFAULT 'les_deux',
+    mode_propose SET('presentiel', 'visio', 'domicile') DEFAULT 'presentiel,visio',
     lieu VARCHAR(255) DEFAULT NULL COMMENT 'Pour mode présentiel',
     statut_creneau ENUM('disponible', 'reserve', 'termine', 'annule') DEFAULT 'disponible',
     notes TEXT,
@@ -211,6 +211,24 @@ CREATE TABLE message (
     INDEX idx_conversation (id_conversation),
     INDEX idx_date (date_envoi),
     INDEX idx_lu (lu)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE document (
+    id_document INT PRIMARY KEY AUTO_INCREMENT,
+    id_utilisateur INT NOT NULL,
+    id_message INT DEFAULT NULL,
+    nom_original VARCHAR(255) NOT NULL,
+    fichier_path VARCHAR(255) NOT NULL,
+    type_fichier VARCHAR(100) DEFAULT NULL,
+    taille_octets INT DEFAULT NULL,
+    categorie VARCHAR(100) DEFAULT NULL,
+    source ENUM('upload','messaging') DEFAULT 'upload',
+    uploaded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (id_utilisateur) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (id_message) REFERENCES message(id_message) ON DELETE SET NULL,
+    INDEX idx_utilisateur (id_utilisateur),
+    INDEX idx_source (source),
+    INDEX idx_uploaded_at (uploaded_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE message_reaction (

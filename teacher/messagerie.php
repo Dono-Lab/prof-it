@@ -3,6 +3,7 @@ require_once __DIR__ . '/../includes/helpers.php';
 require_role('teacher');
 $pageTitle = 'Messagerie - Prof-IT';
 $currentNav = 'teacher_messagerie';
+$currentUserId = $_SESSION['user_id'] ?? 0;
 ?>
 <!DOCTYPE html>
 <html lang="fr">
@@ -49,15 +50,24 @@ $currentNav = 'teacher_messagerie';
                 <div class="chat-main">
                     <div class="p-3 border-bottom bg-white" id="chat-header">
                         <div class="d-flex align-items-center gap-3">
-                            <img src="https://ui-avatars.com/api/?name=Jean+Dupont&background=3b82f6&color=fff"
+                            <img src="https://ui-avatars.com/api/?name=Contact&background=3b82f6&color=fff"
                                 class="rounded-circle" width="48" height="48" alt="Avatar" id="chat-header-avatar">
                             <div class="flex-grow-1">
-                                <h6 class="mb-0 fw-semibold" id="chat-header-name">Jean Dupont</h6>
-                                <small class="text-muted" id="chat-header-status">Étudiant</small>
+                                <h6 class="mb-0 fw-semibold" id="chat-header-name">Sélectionnez un contact</h6>
+                                <small class="text-muted" id="chat-header-status">Aucun statut</small>
                             </div>
-                            <button class="btn btn-sm btn-outline-secondary">
-                                <i class="fas fa-ellipsis-v"></i>
-                            </button>
+                            <div class="dropdown">
+                                <button class="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                    <i class="fas fa-ellipsis-v"></i>
+                                </button>
+                                <ul class="dropdown-menu dropdown-menu-end">
+                                    <li>
+                                        <button class="dropdown-item text-danger" type="button" id="delete-conversation">
+                                            <i class="fas fa-trash-alt me-2"></i>Supprimer la conversation
+                                        </button>
+                                    </li>
+                                </ul>
+                            </div>
                         </div>
                     </div>
 
@@ -72,7 +82,7 @@ $currentNav = 'teacher_messagerie';
 
                     <div class="p-3 border-top bg-white">
                         <div class="input-group">
-                            <button class="btn btn-outline-secondary" type="button" title="Joindre un fichier">
+                            <button class="btn btn-outline-secondary" type="button" title="Joindre un fichier" id="attach-btn">
                                 <i class="fas fa-paperclip"></i>
                             </button>
                             <input type="text" class="form-control"
@@ -83,6 +93,9 @@ $currentNav = 'teacher_messagerie';
                                 <i class="fas fa-paper-plane"></i>
                             </button>
                         </div>
+                        <input type="file" id="attachment-input" style="display:none"
+                            accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.png,.jpg,.jpeg">
+                        <div class="small text-muted mt-2" id="attachment-name"></div>
                     </div>
                 </div>
             </div>
@@ -99,14 +112,26 @@ $currentNav = 'teacher_messagerie';
             const sendBtn = document.getElementById('send-message');
             const searchInput = document.getElementById('search-conversations');
             const chatHeader = document.getElementById('chat-header');
+            const attachmentInput = document.getElementById('attachment-input');
+            const attachmentName = document.getElementById('attachment-name');
+            const attachBtn = document.getElementById('attach-btn');
+            const deleteConversationBtn = document.getElementById('delete-conversation');
+            const csrfToken = '<?= csrf_token() ?>';
 
             let conversations = [];
             let currentConversation = null;
             let currentMessages = [];
+            const REFRESH_INTERVAL = 5000;
 
-            loadConversations();
+            loadConversations(true);
+            setInterval(() => {
+                loadConversations(false);
+                if (currentConversation) {
+                    loadMessages(currentConversation);
+                }
+            }, REFRESH_INTERVAL);
 
-            async function loadConversations() {
+            async function loadConversations(autoSelectFirst = true) {
                 try {
                     const response = await fetch('../api/messaging.php?action=conversations');
                     const data = await response.json();
@@ -115,8 +140,9 @@ $currentNav = 'teacher_messagerie';
                         conversations = data.conversations;
                         renderConversations(conversations);
 
-                        if (conversations.length > 0) {
-                            loadMessages(conversations[0].id_conversation);
+                        if (conversations.length > 0 && (!currentConversation || autoSelectFirst)) {
+                            const initialConversation = currentConversation ?? conversations[0].id_conversation;
+                            loadMessages(initialConversation);
                         }
                     } else {
                         showEmptyConversations();
@@ -138,7 +164,8 @@ $currentNav = 'teacher_messagerie';
                         `<span class="badge bg-primary rounded-pill mt-1">${conv.nb_non_lus}</span>` :
                         '';
                     const unreadClass = conv.nb_non_lus > 0 ? 'unread' : '';
-                    const activeClass = index === 0 ? 'active' : '';
+                    const isActive = currentConversation ? (conv.id_conversation == currentConversation) : (index === 0);
+                    const activeClass = isActive ? 'active' : '';
 
                     return `
                         <div class="conversation-item ${unreadClass} ${activeClass}"
@@ -181,6 +208,7 @@ $currentNav = 'teacher_messagerie';
             }
 
             async function loadMessages(conversationId) {
+                currentConversation = conversationId;
                 try {
                     document.querySelectorAll('.conversation-item').forEach(item => {
                         item.classList.remove('active');
@@ -196,22 +224,26 @@ $currentNav = 'teacher_messagerie';
                     const data = await response.json();
 
                     if (data.success && data.messages) {
-                        currentConversation = conversationId;
                         currentMessages = data.messages;
                         renderMessages(data.messages);
                         updateChatHeader(conversationId);
 
                         markAsRead(conversationId);
                     } else {
-                        messagesContainer.innerHTML = `
-                            <div class="text-center py-5 text-muted">
-                                <p>Erreur lors du chargement des messages</p>
-                            </div>
-                        `;
+                        showMessagesError();
                     }
                 } catch (error) {
                     console.error('Erreur chargement messages:', error);
+                    showMessagesError();
                 }
+            }
+
+            function showMessagesError() {
+                messagesContainer.innerHTML = `
+                    <div class="text-center py-5 text-muted">
+                        <p>Erreur lors du chargement des messages</p>
+                    </div>
+                `;
             }
 
             function renderMessages(messages) {
@@ -226,7 +258,7 @@ $currentNav = 'teacher_messagerie';
                 }
 
                 messagesContainer.innerHTML = messages.map(msg => {
-                    const isSent = msg.id_utilisateur == <?= $userId ?? 0 ?>;
+                    const isSent = msg.id_utilisateur == <?= (int)$currentUserId ?>;
                     const avatarUrl = msg.auteur_photo ?
                         '../' + escapeHtml(msg.auteur_photo) :
                         getAvatarUrl(msg.auteur_nom);
@@ -237,6 +269,7 @@ $currentNav = 'teacher_messagerie';
                                 <div class="d-flex align-items-end gap-2 justify-content-end">
                                     <div class="text-end">
                                         <div class="message-bubble sent">${escapeHtml(msg.contenu)}</div>
+                                        ${renderAttachment(msg)}
                                         <small class="text-muted me-2">${formatMessageDate(msg.date_envoi)}</small>
                                     </div>
                                     <img src="${avatarUrl}" class="rounded-circle" width="32" height="32" alt="Avatar" style="object-fit: cover;">
@@ -250,6 +283,7 @@ $currentNav = 'teacher_messagerie';
                                     <img src="${avatarUrl}" class="rounded-circle" width="32" height="32" alt="Avatar" style="object-fit: cover;">
                                     <div>
                                         <div class="message-bubble received">${escapeHtml(msg.contenu)}</div>
+                                        ${renderAttachment(msg)}
                                         <small class="text-muted ms-2">${formatMessageDate(msg.date_envoi)}</small>
                                     </div>
                                 </div>
@@ -280,7 +314,7 @@ $currentNav = 'teacher_messagerie';
                 const formData = new FormData();
                 formData.append('action', 'mark_as_read');
                 formData.append('conversation_id', conversationId);
-                formData.append('csrf_token', '<?= csrf_token() ?>');
+                formData.append('csrf_token', csrfToken);
 
                 try {
                     await fetch('../api/messaging.php', {
@@ -294,13 +328,17 @@ $currentNav = 'teacher_messagerie';
 
             async function sendMessage() {
                 const text = messageInput.value.trim();
-                if (!text || !currentConversation) return;
+                const file = attachmentInput?.files[0];
+                if ((!text && !file) || !currentConversation) return;
 
                 const formData = new FormData();
                 formData.append('action', 'send_message');
                 formData.append('conversation_id', currentConversation);
                 formData.append('contenu', text);
-                formData.append('csrf_token', '<?= csrf_token() ?>');
+                if (file) {
+                    formData.append('fichier_joint', file);
+                }
+                formData.append('csrf_token', csrfToken);
 
                 try {
                     sendBtn.disabled = true;
@@ -313,6 +351,10 @@ $currentNav = 'teacher_messagerie';
 
                     if (data.success) {
                         messageInput.value = '';
+                        if (attachmentInput) {
+                            attachmentInput.value = '';
+                            attachmentName.textContent = '';
+                        }
                         await loadMessages(currentConversation);
                     } else {
                         alert('Erreur lors de l\'envoi du message: ' + (data.error || 'Erreur inconnue'));
@@ -332,6 +374,20 @@ $currentNav = 'teacher_messagerie';
                     sendMessage();
                 }
             });
+
+            attachBtn?.addEventListener('click', function() {
+                attachmentInput?.click();
+            });
+
+            attachmentInput?.addEventListener('change', function() {
+                if (attachmentInput.files[0]) {
+                    attachmentName.textContent = 'Pièce jointe : ' + attachmentInput.files[0].name;
+                } else {
+                    attachmentName.textContent = '';
+                }
+            });
+
+            deleteConversationBtn?.addEventListener('click', deleteConversation);
 
             searchInput.addEventListener('input', function() {
                 const searchTerm = this.value.toLowerCase();
@@ -404,6 +460,59 @@ $currentNav = 'teacher_messagerie';
                             hour: '2-digit',
                             minute: '2-digit'
                         });
+                }
+            }
+
+            function renderAttachment(msg) {
+                if (!msg.fichier_joint) {
+                    return '';
+                }
+                const name = msg.document_nom || 'Télécharger';
+                return `
+                    <div class="mt-2">
+                        <a href="../${escapeHtml(msg.fichier_joint)}" target="_blank">
+                            <i class="fas fa-paperclip me-1"></i>${escapeHtml(name)}
+                        </a>
+                    </div>
+                `;
+            }
+
+            async function deleteConversation() {
+                if (!currentConversation) {
+                    alert('Sélectionnez une conversation.');
+                    return;
+                }
+
+                if (!confirm('Supprimer définitivement cette conversation ?')) {
+                    return;
+                }
+
+                const formData = new FormData();
+                formData.append('action', 'delete_conversation');
+                formData.append('conversation_id', currentConversation);
+                formData.append('csrf_token', csrfToken);
+
+                try {
+                    const response = await fetch('../api/messaging.php', {
+                        method: 'POST',
+                        body: formData
+                    });
+                    const data = await response.json();
+                    if (data.success) {
+                        currentConversation = null;
+                        messagesContainer.innerHTML = `
+                            <div class="text-center py-5 text-muted">
+                                <i class="fas fa-comments fa-3x mb-3"></i>
+                                <p>Sélectionnez une conversation pour voir les messages</p>
+                            </div>
+                        `;
+                        loadConversations(true);
+                    } else {
+                        alert(data.error || 'Impossible de supprimer la conversation.');
+                    }
+                } catch (error) {
+                    console.error('Erreur suppression conversation:', error);
+                    alert('Erreur lors de la suppression de la conversation.');
                 }
             }
         });

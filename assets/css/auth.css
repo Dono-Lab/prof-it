@@ -409,7 +409,9 @@ p a:hover::after {
 
 @media (max-width: 768px) {
   body {
+    align-items: flex-start !important;
     padding: 15px;
+    padding-top: 80px;
   }
 
   .form-box {
@@ -451,13 +453,19 @@ p a:hover::after {
 
 @media (max-width: 480px) {
   body {
+    align-items: flex-start !important;
     padding: 12px;
+    padding-top: 70px;
   }
 
   .form-box {
     max-width: 100%;
     padding: 28px 24px;
     border-radius: 12px;
+  }
+
+  .form-grid {
+    grid-template-columns: 1fr;
   }
 
   .form-box::before {

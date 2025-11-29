@@ -76,8 +76,7 @@ function isActiveForm($formName, $activeForm)
         Retour
     </a>
     <div class="container">
-        <div class="container">
-            <div class="form-box <?= isActiveForm('login', $activeForm) ?>" id="login-form">
+        <div class="form-box <?= isActiveForm('login', $activeForm) ?>" id="login-form">
                 <form action="login_register.php" method="post">
                     <?= csrf_field() ?>
                     <h2>Connexion</h2>
@@ -122,8 +121,9 @@ function isActiveForm($formName, $activeForm)
                     <p>Vous avez déjà un compte? <a href="#" onclick="showForm('login-form')">Se connecter</a></p>
                 </form>
             </div>
-        </div>
-        <div class="modal fade" id="captchaModal" tabindex="-1">
+    </div>
+
+    <div class="modal fade" id="captchaModal" tabindex="-1">
             <div class="modal-dialog modal-dialog-centered">
                 <div class="modal-content captcha-modal">
                     <div class="modal-header captcha-header">

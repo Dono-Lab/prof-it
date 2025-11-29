@@ -18,7 +18,7 @@
 
         <li>
             <a href="messaging.php" class="<?php if ($current_page === 'messaging.php') echo 'active'; ?>">
-                <i class="fas fa-comments"></i> Messagerie
+                <i class="fas fa-comments"></i> Support
             </a>
         </li>
 

@@ -423,6 +423,18 @@ nav ul li a:hover {
     transition: transform 0.2s, box-shadow 0.2s;
 }
 
+.stats-row {
+    justify-content: center;
+}
+
+.stats-row > .col {
+    display: flex;
+}
+
+.stats-row .stat-card {
+    width: 100%;
+}
+
 .stat-card:hover {
     transform: translateY(-4px);
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
@@ -506,9 +518,36 @@ nav ul li a:hover {
     color: #92400e;
 }
 
+.badge-status.in-progress {
+    background: #fef9c3;
+    color: #854d0e;
+}
+
+.badge-status.finished {
+    background: #dcfce7;
+    color: #047857;
+}
+
 .badge-status.cancelled {
     background: #fee2e2;
     color: #991b1b;
+}
+
+.rdv-manage-list .manage-actions {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+@media (max-width: 576px) {
+    .rdv-manage-list .manage-actions {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .rdv-manage-list .manage-actions .btn {
+        width: 100%;
+    }
 }
 
 /* Chat/Messaging Interface */

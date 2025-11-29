@@ -202,13 +202,21 @@ function get_teacher_upcoming_sessions($user_id, $conn, $limit = 5) {
         LEFT JOIN couvrir co ON o.id_offre = co.id_offre
         LEFT JOIN matiere m ON co.id_matiere = m.id_matiere
         WHERE c.id_utilisateur = ?
-        AND r.statut_reservation = 'confirmee'
+        AND r.statut_reservation IN ('en_attente', 'confirmee')
         AND c.date_debut > NOW()
         ORDER BY c.date_debut ASC
         LIMIT $limit
     ");
     $stmt->execute([$user_id]);
-    return $stmt->fetchAll();
+    $sessions = $stmt->fetchAll();
+    foreach ($sessions as &$session) {
+        $session['statut_cours'] = compute_course_status(
+            $session['date_debut'],
+            $session['date_fin'],
+            $session['statut_reservation']
+        );
+    }
+    return $sessions;
 }
 
 /**
@@ -242,6 +250,85 @@ function get_teacher_available_slots($user_id, $conn, $limit = 5) {
     ");
     $stmt->execute([$user_id]);
     return $stmt->fetchAll();
+}
+
+function get_user_documents($user_id, $conn, $limit = 10) {
+    $limit = (int)$limit;
+    try {
+        $stmt = $conn->prepare("
+            SELECT
+                id_document,
+                nom_original,
+                fichier_path,
+                type_fichier,
+                taille_octets,
+                categorie,
+                source,
+                uploaded_at
+            FROM document
+            WHERE id_utilisateur = ?
+            ORDER BY uploaded_at DESC
+            LIMIT $limit
+        ");
+        $stmt->execute([$user_id]);
+        return $stmt->fetchAll();
+    } catch (PDOException $e) {
+        if (stripos($e->getMessage(), 'document') !== false) {
+            return [];
+        }
+        throw $e;
+    }
+}
+
+function get_user_document_stats($user_id, $conn) {
+    $stats = [
+        'total' => 0,
+        'total_size' => 0,
+        'by_type' => [],
+        'categories' => []
+    ];
+
+    try {
+        $stmt = $conn->prepare("
+            SELECT COUNT(*) AS total, COALESCE(SUM(taille_octets), 0) AS total_size
+            FROM document
+            WHERE id_utilisateur = ?
+        ");
+        $stmt->execute([$user_id]);
+        if ($row = $stmt->fetch()) {
+            $stats['total'] = (int)$row['total'];
+            $stats['total_size'] = (int)$row['total_size'];
+        }
+
+        $stmt = $conn->prepare("
+            SELECT LOWER(SUBSTRING_INDEX(nom_original, '.', -1)) AS ext, COUNT(*) AS total
+            FROM document
+            WHERE id_utilisateur = ?
+            GROUP BY ext
+        ");
+        $stmt->execute([$user_id]);
+        foreach ($stmt->fetchAll() as $row) {
+            $extension = $row['ext'] ?: 'autre';
+            $stats['by_type'][$extension] = (int)$row['total'];
+        }
+
+        $stmt = $conn->prepare("
+            SELECT COALESCE(categorie, 'Autre') AS categorie, COUNT(*) AS total
+            FROM document
+            WHERE id_utilisateur = ?
+            GROUP BY categorie
+            ORDER BY total DESC
+        ");
+        $stmt->execute([$user_id]);
+        $stats['categories'] = $stmt->fetchAll();
+    } catch (PDOException $e) {
+        if (stripos($e->getMessage(), 'document') !== false) {
+            return $stats;
+        }
+        throw $e;
+    }
+
+    return $stats;
 }
 
 /**

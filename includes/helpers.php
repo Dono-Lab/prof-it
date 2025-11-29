@@ -88,3 +88,36 @@ function require_role($role)
         die("Accès refusé : vous devez être $role. <a href='../auth/auth.php'>Se connecter</a>");
     }
 }
+
+function compute_course_status($dateDebut, $dateFin, $statutReservation)
+{
+    try {
+        $now = new DateTime();
+        $start = new DateTime($dateDebut);
+        $end = new DateTime($dateFin);
+    } catch (Exception $e) {
+        return 'a_venir';
+    }
+
+    if ($statutReservation === 'terminee' || $end < $now) {
+        return 'termine';
+    }
+
+    if ($statutReservation === 'confirmee' && $start <= $now && $end >= $now) {
+        return 'en_cours';
+    }
+
+    return 'a_venir';
+}
+
+function course_status_label($status)
+{
+    switch ($status) {
+        case 'en_cours':
+            return 'En cours';
+        case 'termine':
+            return 'Terminé';
+        default:
+            return 'À venir';
+    }
+}

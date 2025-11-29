@@ -25,13 +25,15 @@ try {
                     c.date_fin,
                     c.lieu,
                     CONCAT(u.prenom, ' ', u.nom) as nom_professeur,
+                    u.photo_url as photo_professeur,
                     oc.titre as titre_cours,
-                    m.nom as nom_matiere
+                    m.nom_matiere as nom_matiere
                 FROM reservation r
                 JOIN creneau c ON r.id_creneau = c.id_creneau
                 JOIN users u ON c.id_utilisateur = u.id
                 JOIN offre_cours oc ON c.id_offre = oc.id_offre
-                JOIN matiere m ON oc.id_matiere = m.id_matiere
+                LEFT JOIN couvrir co ON oc.id_offre = co.id_offre
+                LEFT JOIN matiere m ON co.id_matiere = m.id_matiere
                 WHERE r.id_utilisateur = ?
                     AND r.statut_reservation IN ('en_attente', 'confirmee')
                     AND c.date_debut >= NOW()
@@ -40,6 +42,13 @@ try {
             ");
             $stmt->execute([$userId]);
             $reservations = $stmt->fetchAll();
+            foreach ($reservations as &$reservation) {
+                $reservation['statut_cours'] = compute_course_status(
+                    $reservation['date_debut'],
+                    $reservation['date_fin'],
+                    $reservation['statut_reservation']
+                );
+            }
 
             echo json_encode(['success' => true, 'data' => $reservations]);
             break;
@@ -110,11 +119,12 @@ try {
             $hours = $stmt->fetch()['total_hours'];
 
             $stmt = $conn->prepare("
-                SELECT m.nom as matiere, COUNT(*) as count
+                SELECT m.nom_matiere as matiere, COUNT(*) as count
                 FROM reservation r
                 JOIN creneau c ON r.id_creneau = c.id_creneau
                 JOIN offre_cours oc ON c.id_offre = oc.id_offre
-                JOIN matiere m ON oc.id_matiere = m.id_matiere
+                LEFT JOIN couvrir co ON oc.id_offre = co.id_offre
+                LEFT JOIN matiere m ON co.id_matiere = m.id_matiere
                 WHERE r.id_utilisateur = ?
                 GROUP BY m.id_matiere
                 ORDER BY count DESC
@@ -152,13 +162,15 @@ try {
                     c.date_fin,
                     c.lieu,
                     CONCAT(u.prenom, ' ', u.nom) as nom_professeur,
+                    u.photo_url as photo_professeur,
                     oc.titre as titre_cours,
-                    m.nom as nom_matiere
+                    m.nom_matiere as nom_matiere
                 FROM reservation r
                 JOIN creneau c ON r.id_creneau = c.id_creneau
                 JOIN users u ON c.id_utilisateur = u.id
                 JOIN offre_cours oc ON c.id_offre = oc.id_offre
-                JOIN matiere m ON oc.id_matiere = m.id_matiere
+                LEFT JOIN couvrir co ON oc.id_offre = co.id_offre
+                LEFT JOIN matiere m ON co.id_matiere = m.id_matiere
                 WHERE r.id_utilisateur = ?
                     AND r.statut_reservation IN ('en_attente', 'confirmee')
                     AND c.date_debut >= NOW()
@@ -167,6 +179,13 @@ try {
             ");
             $stmt->execute([$userId]);
             $reservations = $stmt->fetchAll();
+            foreach ($reservations as &$reservation) {
+                $reservation['statut_cours'] = compute_course_status(
+                    $reservation['date_debut'],
+                    $reservation['date_fin'],
+                    $reservation['statut_reservation']
+                );
+            }
 
             $stmt = $conn->prepare("
                 SELECT telephone, adresse, ville, code_postal, bio, photo_url
@@ -221,11 +240,12 @@ try {
             $hours = $stmt->fetch()['total_hours'];
 
             $stmt = $conn->prepare("
-                SELECT m.nom as matiere, COUNT(*) as count
+                SELECT m.nom_matiere as matiere, COUNT(*) as count
                 FROM reservation r
                 JOIN creneau c ON r.id_creneau = c.id_creneau
                 JOIN offre_cours oc ON c.id_offre = oc.id_offre
-                JOIN matiere m ON oc.id_matiere = m.id_matiere
+                LEFT JOIN couvrir co ON oc.id_offre = co.id_offre
+                LEFT JOIN matiere m ON co.id_matiere = m.id_matiere
                 WHERE r.id_utilisateur = ?
                 GROUP BY m.id_matiere
                 ORDER BY count DESC
