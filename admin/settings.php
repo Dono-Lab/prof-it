@@ -81,13 +81,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         $targetDir = __DIR__ . '/../assets/img/avatars';
                         if (!is_dir($targetDir)) mkdir($targetDir, 0755, true);
                         
-                        if (move_uploaded_file($_FILES['avatar']['tmp_name'], $targetDir . '/' . $filename)) {
-                            $photoUrl = 'assets/img/avatars/' . $filename;
-                            $_SESSION['avatar_url'] = $photoUrl;
-                        } else {
-                            $errorMessage = 'Erreur lors de l\'enregistrement de l\'image.';
+                            if (move_uploaded_file($_FILES['avatar']['tmp_name'], $targetDir . '/' . $filename)) {
+                                $photoUrl = 'assets/img/avatars/' . $filename;
+                                $_SESSION['avatar_url'] = $photoUrl;
+                            } else {
+                                $errorMessage = 'Erreur lors de l\'enregistrement de l\'image.';
+                            }
                         }
-                    }
                 } else {
                     $errorMessage = 'Erreur lors du téléchargement de l\'image.';
                 }

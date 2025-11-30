@@ -83,10 +83,10 @@ function handleUpload($conn, $userId)
 
     $uploadDir = __DIR__ . '/../uploads/documents/' . $userId;
     if (!is_dir($uploadDir) && !mkdir($uploadDir, 0755, true) && !is_dir($uploadDir)) {
-        http_response_code(500);
+            http_response_code(500);
         echo json_encode(['success' => false, 'error' => 'Impossible de créer le dossier de stockage']);
-        return;
-    }
+            return;
+        }
 
     $safeName = preg_replace('/[^a-zA-Z0-9_\.-]/', '_', $file['name']);
     $newFileName = uniqid('doc_', true) . '_' . $safeName;
