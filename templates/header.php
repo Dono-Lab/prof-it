@@ -26,7 +26,7 @@ if (!empty($_SESSION['avatar_url'])) {
     <div class="container header-container">
         <div class="header-content">
             <div class="logo">
-                <a href="../public/home.html">
+                <a href="../public/home.php">
                     <img id="logo" src="../assets/img/prof_it_logo_blanc.png" alt="Prof-IT">
                 </a>
             </div>
@@ -101,10 +101,16 @@ if (!empty($_SESSION['avatar_url'])) {
                             </ul>
                         </li>
                     <?php else: ?>
-                        <li><a href="../public/home.html">Accueil</a></li>
+                        <li><a href="../public/home.php">Accueil</a></li>
                     <?php endif; ?>
                 </ul>
             </nav>
         </div>
     </div>
 </header>
+<script src="../assets/js/auto_logout.js"></script>
+<script>
+    <?php if (defined('SESSION_LIFETIME')): ?>
+    initAutoLogout(<?= SESSION_LIFETIME ?>);
+    <?php endif; ?>
+</script>

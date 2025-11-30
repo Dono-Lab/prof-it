@@ -24,7 +24,26 @@ if (!isset($_FILES['avatar']) || $_FILES['avatar']['error'] === UPLOAD_ERR_NO_FI
 }
 
 if ($_FILES['avatar']['error'] !== UPLOAD_ERR_OK) {
-    $_SESSION['success_message'] = 'Erreur lors de l\'upload de l\'avatar.';
+    $msg = 'Erreur inconnue lors de l\'upload.';
+    switch ($_FILES['avatar']['error']) {
+        case UPLOAD_ERR_INI_SIZE:
+        case UPLOAD_ERR_FORM_SIZE:
+            $msg = 'Le fichier est trop volumineux (limite serveur ou formulaire dépassée).';
+            break;
+        case UPLOAD_ERR_PARTIAL:
+            $msg = 'L\'upload a été interrompu.';
+            break;
+        case UPLOAD_ERR_NO_TMP_DIR:
+            $msg = 'Dossier temporaire manquant sur le serveur.';
+            break;
+        case UPLOAD_ERR_CANT_WRITE:
+            $msg = 'Échec de l\'écriture du fichier sur le disque.';
+            break;
+        case UPLOAD_ERR_EXTENSION:
+            $msg = 'Une extension PHP a bloqué l\'upload.';
+            break;
+    }
+    $_SESSION['success_message'] = $msg;
     header('Location: settings.php');
     exit;
 }
@@ -45,7 +64,7 @@ if (!isset($allowedTypes[$type])) {
     exit;
 }
 
-if ($size > 2 * 1024 * 1024) {
+if ($size > 2 * 1024 * 1024) { // 2 Mo
     $_SESSION['success_message'] = 'Avatar trop volumineux (2 Mo max).';
     header('Location: settings.php');
     exit;
@@ -56,23 +75,31 @@ $filename = 'student_' . $userId . '_' . time() . '.' . $ext;
 $targetDir = __DIR__ . '/../assets/img/avatars';
 
 if (!is_dir($targetDir)) {
-    @mkdir($targetDir, 0755, true);
+    if (!mkdir($targetDir, 0755, true)) {
+        $_SESSION['success_message'] = 'Erreur : Impossible de créer le dossier de destination.';
+        header('Location: settings.php');
+        exit;
+    }
 }
 
 $targetPath = $targetDir . '/' . $filename;
 if (!move_uploaded_file($tmp, $targetPath)) {
-    $_SESSION['success_message'] = 'Erreur lors de l\'upload de l\'avatar.';
+    $_SESSION['success_message'] = 'Erreur lors de l\'enregistrement du fichier (permissions ?).';
     header('Location: settings.php');
     exit;
 }
 
 $photoUrl = 'assets/img/avatars/' . $filename;
 
-$stmt = $conn->prepare("UPDATE users SET photo_url = ? WHERE id = ?");
-$stmt->execute([$photoUrl, $userId]);
+try {
+    $stmt = $conn->prepare("UPDATE users SET photo_url = ? WHERE id = ?");
+    $stmt->execute([$photoUrl, $userId]);
 
-$_SESSION['avatar_url'] = $photoUrl;
-$_SESSION['success_message'] = 'Avatar mis à jour avec succès.';
+    $_SESSION['avatar_url'] = $photoUrl;
+    $_SESSION['success_message'] = 'Avatar mis à jour avec succès.';
+} catch (PDOException $e) {
+    $_SESSION['success_message'] = 'Erreur base de données : ' . $e->getMessage();
+}
 
 header('Location: settings.php');
 exit;

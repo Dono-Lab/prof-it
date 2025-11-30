@@ -41,7 +41,7 @@ if (!empty($_SESSION['avatar_url'])) {
                 </div>
                 <ul class="dropdown-menu dropdown-menu-end">
                     <li><a class="dropdown-item" href="settings.php"><i class="fas fa-cog me-2"></i>Paramètres</a></li>
-                    <li><a class="dropdown-item" href="../public/home.html"><i class="fa-solid fa-house me-2"></i>Accueil</a></li>
+                    <li><a class="dropdown-item" href="../public/home.php"><i class="fa-solid fa-house me-2"></i>Accueil</a></li>
                     <li>
                         <hr class="dropdown-divider">
                     </li>
@@ -57,3 +57,9 @@ if (!empty($_SESSION['avatar_url'])) {
             </div>
         </div>
     </header>
+    <script src="../assets/js/auto_logout.js"></script>
+    <script>
+        <?php if (defined('SESSION_LIFETIME')): ?>
+        initAutoLogout(<?= SESSION_LIFETIME ?>);
+        <?php endif; ?>
+    </script>

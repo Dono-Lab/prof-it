@@ -210,8 +210,10 @@ function getUpcomingAppointments($conn, $userId, $userRole)
             LEFT JOIN couvrir co ON o.id_offre = co.id_offre
             LEFT JOIN matiere m ON co.id_matiere = m.id_matiere
             WHERE r.id_utilisateur = ?
-            AND r.statut_reservation IN ('confirmee', 'en_attente')
-            AND c.date_debut > NOW()
+            AND (
+                (r.statut_reservation IN ('confirmee', 'en_attente') AND c.date_fin >= NOW())
+                OR (r.statut_reservation = 'en_cours' AND c.date_debut <= NOW() AND c.date_fin >= NOW())
+            )
             ORDER BY c.date_debut ASC
         ";
         $stmt = $conn->prepare($sql);
@@ -236,8 +238,10 @@ function getUpcomingAppointments($conn, $userId, $userRole)
             LEFT JOIN couvrir co ON o.id_offre = co.id_offre
             LEFT JOIN matiere m ON co.id_matiere = m.id_matiere
             WHERE c.id_utilisateur = ?
-            AND r.statut_reservation IN ('confirmee', 'en_attente')
-            AND c.date_debut > NOW()
+            AND (
+                (r.statut_reservation IN ('confirmee', 'en_attente') AND c.date_fin >= NOW())
+                OR (r.statut_reservation = 'en_cours' AND c.date_debut <= NOW() AND c.date_fin >= NOW())
+            )
             ORDER BY c.date_debut ASC
         ";
         $stmt = $conn->prepare($sql);
@@ -281,7 +285,7 @@ function getHistoryAppointments($conn, $userId, $userRole)
             LEFT JOIN couvrir co ON o.id_offre = co.id_offre
             LEFT JOIN matiere m ON co.id_matiere = m.id_matiere
             WHERE r.id_utilisateur = ?
-            AND r.statut_reservation = 'terminee'
+            AND (r.statut_reservation = 'terminee' OR c.date_fin < NOW())
             ORDER BY c.date_debut DESC
             LIMIT 10
         ";
@@ -307,7 +311,7 @@ function getHistoryAppointments($conn, $userId, $userRole)
             LEFT JOIN couvrir co ON o.id_offre = co.id_offre
             LEFT JOIN matiere m ON co.id_matiere = m.id_matiere
             WHERE c.id_utilisateur = ?
-            AND r.statut_reservation = 'terminee'
+            AND (r.statut_reservation = 'terminee' OR c.date_fin < NOW())
             ORDER BY c.date_debut DESC
             LIMIT 10
         ";
@@ -653,21 +657,34 @@ function createSlot($conn, $userId)
     $stmt->execute([$offreId, $userId]);
     if (!$stmt->fetch()) {
         http_response_code(403);
-        echo json_encode(['success' => false, 'error' => 'Offre non autorisée']);
+        echo json_encode(['success' => false, 'error' => 'Offre non autoris�e']);
         return;
     }
 
-    if (strtotime($dateDebut) <= time()) {
+    $startObj = DateTime::createFromFormat('Y-m-d\TH:i', $dateDebut);
+    $endObj = DateTime::createFromFormat('Y-m-d\TH:i', $dateFin);
+    if ($startObj === false || $endObj === false) {
         http_response_code(400);
-        echo json_encode(['success' => false, 'error' => 'La date de début doit être dans le futur']);
+        echo json_encode(['success' => false, 'error' => 'Format de date invalide']);
         return;
     }
 
-    if (strtotime($dateFin) <= strtotime($dateDebut)) {
+    $startTs = $startObj->getTimestamp();
+    $endTs = $endObj->getTimestamp();
+    if ($startTs <= time()) {
         http_response_code(400);
-        echo json_encode(['success' => false, 'error' => 'La date de fin doit être après la date de début']);
+        echo json_encode(['success' => false, 'error' => 'La date de d�but doit �tre dans le futur']);
         return;
     }
+
+    if ($endTs <= $startTs) {
+        http_response_code(400);
+        echo json_encode(['success' => false, 'error' => 'La date de fin doit �tre apr�s la date de d�but']);
+        return;
+    }
+
+    $dateDebutSql = $startObj->format('Y-m-d H:i:s');
+    $dateFinSql = $endObj->format('Y-m-d H:i:s');
 
     $sql = "
         INSERT INTO creneau
@@ -679,8 +696,8 @@ function createSlot($conn, $userId)
     $stmt->execute([
         $userId,
         $offreId,
-        $dateDebut,
-        $dateFin,
+        $dateDebutSql,
+        $dateFinSql,
         $tarifHoraire,
         $modePropose,
         $lieu

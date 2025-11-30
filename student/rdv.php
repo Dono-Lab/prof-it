@@ -474,7 +474,7 @@ $userId = $_SESSION['user_id'] ?? null;
                 }
 
                 container.innerHTML = appointments.map(appt => {
-                    const status = getRdvStatus(appt.statut_reservation);
+                    const status = getRdvStatus(appt.statut_reservation, appt.statut_cours);
 
                     const modeIcons = {
                         'presentiel': 'fa-building',
@@ -496,7 +496,7 @@ $userId = $_SESSION['user_id'] ?? null;
                             <p class="mb-1 text-muted small"><i class="fas fa-user me-2"></i>${escapeHtml(appt.nom_professeur)}</p>
                             <p class="mb-1 text-muted small"><i class="fas fa-calendar me-2"></i>${dateTimeStr}</p>
                             <p class="mb-1 text-muted small"><i class="fas ${modeIcon} me-2"></i>${ucFirst(appt.mode_choisi)}</p>
-                            <p class="mb-0 text-muted small"><i class="fas fa-flag me-2"></i>${formatCourseStatus(appt.statut_cours)}</p>
+                                ${appt.lieu ? `<p class="mb-0 text-muted small"><i class="fas fa-location-dot me-2"></i>${escapeHtml(appt.lieu)}</p>` : ''}
                         </div>
                     `;
                 }).join('');
@@ -529,7 +529,7 @@ $userId = $_SESSION['user_id'] ?? null;
             }
 
             function renderStudentManageItem(appt) {
-                const status = getRdvStatus(appt.statut_reservation);
+                const status = getRdvStatus(appt.statut_reservation, appt.statut_cours);
                 const dateDebut = new Date(appt.date_debut);
                 const dateFin = new Date(appt.date_fin);
                 const modeIcons = {
@@ -539,6 +539,15 @@ $userId = $_SESSION['user_id'] ?? null;
                 };
                 const modeIcon = modeIcons[appt.mode_choisi] || 'fa-question';
 
+                let pdfButton = '';
+                if (appt.statut_reservation === 'terminee' || appt.statut_reservation === 'confirmee' || appt.statut_cours === 'termine') {
+                    pdfButton = `
+                        <a href="export_pdf.php?id=${appt.id_reservation}" class="btn btn-sm btn-outline-danger ms-2" title="Télécharger le reçu PDF" target="_blank">
+                            <i class="fas fa-file-pdf"></i>
+                        </a>
+                    `;
+                }
+
                 return `
                     <div class="border rounded p-3 mb-3">
                         <div class="d-flex justify-content-between align-items-start">
@@ -547,9 +556,12 @@ $userId = $_SESSION['user_id'] ?? null;
                                 <p class="mb-1 text-muted small"><i class="fas fa-user me-1"></i>${escapeHtml(appt.nom_professeur || '')}</p>
                                 <p class="mb-1 text-muted small"><i class="fas fa-calendar me-1"></i>${formatDateTimeFr(dateDebut)} - ${formatTime(dateFin)}</p>
                                 <p class="mb-1 text-muted small"><i class="fas ${modeIcon} me-1"></i>${ucFirst(appt.mode_choisi)}</p>
-                                <p class="mb-0 text-muted small"><i class="fas fa-flag me-1"></i>${formatCourseStatus(appt.statut_cours)}</p>
+                                ${appt.lieu ? `<p class="mb-0 text-muted small"><i class="fas fa-location-dot me-1"></i>${escapeHtml(appt.lieu)}</p>` : ''}
                             </div>
-                            <span class="badge-status ${status.class}">${status.label}</span>
+                            <div class="d-flex flex-column align-items-end">
+                                <span class="badge-status ${status.class} mb-2">${status.label}</span>
+                                ${pdfButton}
+                            </div>
                         </div>
                     </div>
                 `;
@@ -586,7 +598,10 @@ $userId = $_SESSION['user_id'] ?? null;
                 `;
             }
 
-            function getRdvStatus(status) {
+            function getRdvStatus(status, courseStatus = '') {
+                if (courseStatus === 'termine') {
+                    return { class: 'finished', label: 'Terminé' };
+                }
                 const map = {
                     'confirmee': { class: 'confirmed', label: 'Confirmé' },
                     'en_attente': { class: 'waiting', label: 'En attente' },

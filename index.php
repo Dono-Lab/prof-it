@@ -19,5 +19,5 @@ if (is_logged_in()) {
     }
 }
 
-header("Location: public/home.html");
+header("Location: public/home.php");
 exit;
