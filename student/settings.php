@@ -36,7 +36,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $ville = trim($_POST['ville'] ?? '');
     $code_postal = trim($_POST['code_postal'] ?? '');
     $bio = trim($_POST['bio'] ?? '');
-    $changePassword = isset($_POST['change_password']) && $_POST['change_password'] === '1';
+    $changePassword = true;
     $password = $_POST['password'] ?? '';
     $password_confirm = $_POST['password_confirm'] ?? '';
 
