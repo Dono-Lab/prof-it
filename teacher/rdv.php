@@ -246,7 +246,7 @@ try {
 }
 
 try {
-    $stmtSlots = $conn->prepare('SELECT c.id_creneau, c.date_debut, c.date_fin, c.tarif_horaire, c.mode_propose, c.lieu, o.titre AS titre_cours, m.nom_matiere FROM creneau c INNER JOIN offre_cours o ON c.id_offre = o.id_offre LEFT JOIN couvrir co ON o.id_offre = co.id_offre LEFT JOIN matiere m ON co.id_matiere = m.id_matiere WHERE c.id_utilisateur = ? AND c.statut_creneau = "disponible" AND c.date_debut > NOW() ORDER BY c.date_debut ASC');
+    $stmtSlots = $conn->prepare('SELECT c.id_creneau, c.date_debut, c.date_fin, c.tarif_horaire, c.mode_propose, c.lieu, o.titre AS titre_cours, m.nom_matiere FROM creneau c INNER JOIN offre_cours o ON c.id_offre = o.id_offre LEFT JOIN couvrir co ON o.id_offre = co.id_offre LEFT JOIN matiere m ON co.id_matiere = m.id_matiere WHERE c.id_utilisateur = ? AND c.statut_creneau = "disponible" AND c.date_debut >= NOW() ORDER BY c.date_debut ASC');
     $stmtSlots->execute([$userId]);
     $availableSlots = $stmtSlots->fetchAll();
 } catch (Exception $e) {
@@ -432,7 +432,7 @@ try {
                                         <?php
                                         $slotTitle = $slot['titre_cours'];
                                         if (!empty($slot['nom_matiere'])) {
-                                            $slotTitle = $slot['nom_matiere'];
+                                            $slotTitle = $slot['titre_cours'];
                                         }
                                         $slotModes = [];
                                         if (!empty($slot['mode_propose'])) {
@@ -441,8 +441,11 @@ try {
                                         ?>
                                         <div class="col-md-6 mb-3">
                                             <div class="time-slot h-100">
-                                                <div class="fw-bold mb-1"><?php echo htmlspecialchars($slotTitle, ENT_QUOTES, 'UTF-8'); ?></div>
-                                                <div class="text-muted small"><?php echo htmlspecialchars(format_date_fr($slot['date_debut']), ENT_QUOTES, 'UTF-8'); ?> - <?php echo htmlspecialchars(date('H:i', strtotime($slot['date_fin'])), ENT_QUOTES, 'UTF-8'); ?></div>
+                                                <div class="fw-bold"><?php echo htmlspecialchars($slot['titre_cours'], ENT_QUOTES, 'UTF-8'); ?></div>
+                                                <?php if (!empty($slot['nom_matiere'])): ?>
+                                                    <div class="text-muted small"><?php echo htmlspecialchars($slot['nom_matiere'], ENT_QUOTES, 'UTF-8'); ?></div>
+                                                <?php endif; ?>
+                                                <div class="text-muted small mt-1"><?php echo htmlspecialchars(format_date_fr($slot['date_debut']), ENT_QUOTES, 'UTF-8'); ?> - <?php echo htmlspecialchars(date('H:i', strtotime($slot['date_fin'])), ENT_QUOTES, 'UTF-8'); ?></div>
                                                 <div class="small mt-1">Tarif : <?php echo number_format((float)$slot['tarif_horaire'], 2, ',', ' '); ?> €/h</div>
                                                 <?php if (!empty($slot['lieu'])): ?>
                                                     <div class="small text-muted"><i class="fas fa-location-dot me-1"></i><?php echo htmlspecialchars($slot['lieu'], ENT_QUOTES, 'UTF-8'); ?></div>

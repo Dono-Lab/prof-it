@@ -294,10 +294,10 @@ $userId = $_SESSION['user_id'] ?? null;
                     return `
                         <div class="col-6 mb-3">
                             <div class="time-slot" onclick="selectTimeSlot(${slot.id_creneau})" data-slot-id="${slot.id_creneau}">
-                                <div>${timeRange}</div>
-                                <small>${dateStr}</small>
-                                <small class="d-block text-primary">${escapeHtml(slot.nom_professeur)}</small>
-                                <small class="d-block">${escapeHtml(slot.nom_matiere || 'Cours')}</small>
+                                <div class="fw-bold">${escapeHtml(slot.titre_cours || 'Cours')}</div>
+                                <small class="d-block text-primary">${escapeHtml(slot.nom_matiere || '')}</small>
+                                <div class="text-muted small mt-1">${dateStr} - ${timeRange}</div>
+                                <small class="d-block text-muted">Prof : ${escapeHtml(slot.nom_professeur)}</small>
                             </div>
                         </div>
                     `;
@@ -371,7 +371,8 @@ $userId = $_SESSION['user_id'] ?? null;
                     <div class="border rounded-3 p-3 mb-3">
                         <div class="d-flex flex-wrap gap-3 align-items-center">
                             <div class="flex-grow-1">
-                                <h6 class="mb-1">${escapeHtml(course.nom_matiere || course.titre || 'Cours')}</h6>
+                                <h6 class="mb-0">${escapeHtml(course.titre || 'Cours')}</h6>
+                                <p class="mb-1 text-primary small">${escapeHtml(course.nom_matiere || '')}</p>
                                 <p class="mb-1 text-muted small"><i class="fas fa-user me-1"></i>${escapeHtml(course.nom_professeur || '')}</p>
                                 <p class="mb-1 text-muted small"><i class="fas fa-clock me-1"></i>${priceLabel}</p>
                                 <p class="mb-0 text-muted small"><i class="fas fa-layer-group me-1"></i>${modesLabel}</p>
