@@ -1,4 +1,3 @@
-
 <?php
 require_once __DIR__ . '/../includes/helpers.php';
 require_once __DIR__ . '/../config/config.php';
@@ -13,6 +12,8 @@ if (isset($_SESSION['user_id'])) {
 
 $successMessage = '';
 $errorMessage = '';
+$sessionsMonth = 0;
+$totalHeures = 0;
 
 function format_datetime_input($value)
 {
@@ -37,7 +38,6 @@ function format_date_fr($value)
     }
     return date('d/m/Y H:i', $ts);
 }
-
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $csrfToken = $_POST['csrf_token'] ?? '';
     if (!verify_csrf($csrfToken)) {
@@ -55,8 +55,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 try {
                     $conn->beginTransaction();
 
-                    $stmt = $conn->prepare('INSERT INTO offre_cours (titre, description_offre, tarif_horaire_defaut) VALUES (?, ?, ?)');
-                    $stmt->execute([$titre, $description, $tarifHoraire]);
+            $stmt = $conn->prepare('INSERT INTO offre_cours (titre, description, tarif_horaire_defaut) VALUES (?, ?, ?)');
+            $stmt->execute([$titre, $description, $tarifHoraire]);
                     $offreId = $conn->lastInsertId();
 
                     $stmt = $conn->prepare('INSERT INTO enseigner (id_utilisateur, id_offre, actif) VALUES (?, ?, 1)');
@@ -155,12 +155,79 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $errorMessage = 'Erreur statut : ' . $e->getMessage();
                 }
             }
+        } elseif (isset($_POST['update_offer'])) {
+            $offreId = intval($_POST['offre_id'] ?? 0);
+            $titre = trim($_POST['titre'] ?? '');
+            $description = trim($_POST['description'] ?? '');
+            $tarifHoraire = floatval($_POST['tarif_horaire'] ?? 0);
+            $matiereId = intval($_POST['matiere_id'] ?? 0);
+
+            if ($offreId <= 0) {
+                $errorMessage = 'Offre invalide.';
+            } elseif ($titre === '' || $tarifHoraire <= 0 || $matiereId <= 0) {
+                $errorMessage = 'Champs obligatoires manquants.';
+            } else {
+                try {
+                    $stmt = $conn->prepare('SELECT id_offre FROM enseigner WHERE id_offre = ? AND id_utilisateur = ? AND actif = 1');
+                    $stmt->execute([$offreId, $userId]);
+                    if (!$stmt->fetch()) {
+                        $errorMessage = 'Offre non autorisée.';
+                    } else {
+            $stmt = $conn->prepare('UPDATE offre_cours SET titre = ?, description = ?, tarif_horaire_defaut = ? WHERE id_offre = ?');
+            $stmt->execute([$titre, $description, $tarifHoraire, $offreId]);
+                        $stmt = $conn->prepare('UPDATE couvrir SET id_matiere = ? WHERE id_offre = ?');
+                        $stmt->execute([$matiereId, $offreId]);
+                        if ($stmt->rowCount() === 0) {
+                            $stmtInsert = $conn->prepare('INSERT INTO couvrir (id_offre, id_matiere) VALUES (?, ?)');
+                            $stmtInsert->execute([$offreId, $matiereId]);
+                        }
+                        $successMessage = 'Offre mise à jour.';
+                    }
+                } catch (Exception $e) {
+                    $errorMessage = 'Erreur mise à jour offre : ' . $e->getMessage();
+                }
+            }
+        } elseif (isset($_POST['delete_offer'])) {
+            $offreId = intval($_POST['offre_id'] ?? 0);
+            if ($offreId <= 0) {
+                $errorMessage = 'Offre invalide.';
+            } else {
+                try {
+                    $stmt = $conn->prepare('SELECT id_offre FROM enseigner WHERE id_offre = ? AND id_utilisateur = ? AND actif = 1');
+                    $stmt->execute([$offreId, $userId]);
+                    if (!$stmt->fetch()) {
+                        $errorMessage = 'Offre non autorisée.';
+                    } else {
+                        $stmt = $conn->prepare('SELECT COUNT(*) AS total FROM creneau WHERE id_offre = ?');
+                        $stmt->execute([$offreId]);
+                        $row = $stmt->fetch();
+                        $hasSlots = false;
+                        if ($row && isset($row['total'])) {
+                            $hasSlots = (int)$row['total'] > 0;
+                        }
+                        if ($hasSlots) {
+                            $errorMessage = 'Supprimez les créneaux liés avant de retirer cette offre.';
+                        } else {
+                            $conn->beginTransaction();
+                            $conn->prepare('DELETE FROM couvrir WHERE id_offre = ?')->execute([$offreId]);
+                            $conn->prepare('DELETE FROM enseigner WHERE id_offre = ? AND id_utilisateur = ?')->execute([$offreId, $userId]);
+                            $conn->prepare('DELETE FROM offre_cours WHERE id_offre = ?')->execute([$offreId]);
+                            $conn->commit();
+                            $successMessage = 'Offre supprimée.';
+                        }
+                    }
+                } catch (Exception $e) {
+                    if ($conn->inTransaction()) {
+                        $conn->rollBack();
+                    }
+                    $errorMessage = 'Erreur suppression offre : ' . $e->getMessage();
+                }
+            }
         }
     }
 }
-
 try {
-    $stmt = $conn->prepare('SELECT o.id_offre, o.titre, o.tarif_horaire_defaut, m.nom_matiere FROM offre_cours o LEFT JOIN enseigner e ON o.id_offre = e.id_offre LEFT JOIN couvrir c ON o.id_offre = c.id_offre LEFT JOIN matiere m ON c.id_matiere = m.id_matiere WHERE e.id_utilisateur = ? AND e.actif = 1 ORDER BY o.titre');
+    $stmt = $conn->prepare('SELECT o.id_offre, o.titre, o.description, o.tarif_horaire_defaut, m.id_matiere, m.nom_matiere FROM offre_cours o LEFT JOIN enseigner e ON o.id_offre = e.id_offre LEFT JOIN couvrir c ON o.id_offre = c.id_offre LEFT JOIN matiere m ON c.id_matiere = m.id_matiere WHERE e.id_utilisateur = ? AND e.actif = 1 ORDER BY o.titre');
     $stmt->execute([$userId]);
     $offres = $stmt->fetchAll();
 } catch (Exception $e) {
@@ -202,25 +269,6 @@ try {
     $historySessions = [];
 }
 
-$sessionsMonth = 0;
-$totalHeures = 0;
-try {
-    $stmtCount = $conn->prepare('SELECT COUNT(*) AS count FROM creneau c INNER JOIN reservation r ON c.id_creneau = r.id_creneau WHERE c.id_utilisateur = ? AND r.statut_reservation IN ("confirmee", "terminee") AND MONTH(c.date_debut) = MONTH(CURRENT_DATE()) AND YEAR(c.date_debut) = YEAR(CURRENT_DATE())');
-    $stmtCount->execute([$userId]);
-    $rowCount = $stmtCount->fetch();
-    if ($rowCount && isset($rowCount['count'])) {
-        $sessionsMonth = (int)$rowCount['count'];
-    }
-    $stmtHours = $conn->prepare('SELECT SUM(TIMESTAMPDIFF(MINUTE, c.date_debut, c.date_fin) / 60) AS total_heures FROM creneau c INNER JOIN reservation r ON c.id_creneau = r.id_creneau WHERE c.id_utilisateur = ? AND r.statut_reservation IN ("confirmee", "terminee")');
-    $stmtHours->execute([$userId]);
-    $rowHours = $stmtHours->fetch();
-    if ($rowHours && isset($rowHours['total_heures'])) {
-        $totalHeures = round((float)$rowHours['total_heures'], 0);
-    }
-} catch (Exception $e) {
-    $sessionsMonth = 0;
-    $totalHeures = 0;
-}
 ?>
 <!DOCTYPE html>
 <html lang="fr">
@@ -295,7 +343,6 @@ try {
                     </form>
                 </div>
             </div>
-
             <div class="row">
                 <div class="col-lg-8">
                     <div class="card-custom mb-4">
@@ -307,18 +354,67 @@ try {
                                 <p class="text-muted mb-0">Aucune offre enregistrée.</p>
                             <?php else: ?>
                                 <?php foreach ($offres as $offre): ?>
+                                    <?php $offreMatiereId = isset($offre['id_matiere']) ? (int)$offre['id_matiere'] : 0; ?>
                                     <div class="border rounded p-3 mb-3">
-                                        <div class="fw-bold"><?php echo htmlspecialchars($offre['titre'], ENT_QUOTES, 'UTF-8'); ?></div>
-                                        <?php if (!empty($offre['nom_matiere'])): ?>
-                                            <div class="small text-muted">Matière : <?php echo htmlspecialchars($offre['nom_matiere'], ENT_QUOTES, 'UTF-8'); ?></div>
-                                        <?php endif; ?>
-                                        <div class="small text-muted">Tarif défaut : <?php echo number_format((float)$offre['tarif_horaire_defaut'], 2, ',', ' '); ?> €/h</div>
+                                    <div class="d-flex justify-content-between align-items-start">
+                                            <div>
+                                                <div class="fw-bold"><?php echo htmlspecialchars($offre['titre'], ENT_QUOTES, 'UTF-8'); ?></div>
+                                                <?php if (!empty($offre['nom_matiere'])): ?>
+                                                    <div class="small text-muted">Matière : <?php echo htmlspecialchars($offre['nom_matiere'], ENT_QUOTES, 'UTF-8'); ?></div>
+                                                <?php endif; ?>
+                                                <div class="small text-muted">Tarif défaut : <?php echo number_format((float)$offre['tarif_horaire_defaut'], 2, ',', ' '); ?> €/h</div>
+                                            </div>
+                                            <div class="d-flex flex-column gap-2 ms-2">
+                                                <button type="button" class="btn btn-sm btn-outline-primary offer-edit-btn" data-target="offer-edit-<?php echo (int)$offre['id_offre']; ?>">Modifier</button>
+                                                <form method="POST" onsubmit="return confirm('Supprimer cette offre ?');">
+                                                    <input type="hidden" name="csrf_token" value="<?php echo csrf_token(); ?>">
+                                                    <input type="hidden" name="delete_offer" value="1">
+                                                    <input type="hidden" name="offre_id" value="<?php echo (int)$offre['id_offre']; ?>">
+                                                    <button type="submit" class="btn btn-sm btn-outline-danger">Supprimer</button>
+                                                </form>
+                                            </div>
+                                        </div>
+                                        <div class="mt-3 border-top pt-3" id="offer-edit-<?php echo (int)$offre['id_offre']; ?>" style="display: none;">
+                                            <form method="POST">
+                                                <input type="hidden" name="csrf_token" value="<?php echo csrf_token(); ?>">
+                                                <input type="hidden" name="update_offer" value="1">
+                                                <input type="hidden" name="offre_id" value="<?php echo (int)$offre['id_offre']; ?>">
+                                                <div class="row">
+                                                    <div class="col-md-6 mb-2">
+                                                        <label class="form-label">Titre</label>
+                                                        <input type="text" class="form-control" name="titre" value="<?php echo htmlspecialchars($offre['titre'], ENT_QUOTES, 'UTF-8'); ?>" required>
+                                                    </div>
+                                                    <div class="col-md-3 mb-2">
+                                                        <label class="form-label">Matière</label>
+                                                        <select class="form-select" name="matiere_id" required>
+                                                            <option value="">Sélectionnez...</option>
+                                                            <?php foreach ($matieres as $matiere): ?>
+                                                                <?php $isSelected = ($offreMatiereId > 0 && $offreMatiereId === (int)$matiere['id_matiere']); ?>
+                                                                <?php if ($isSelected): ?>
+                                                                    <option value="<?php echo (int)$matiere['id_matiere']; ?>" selected><?php echo htmlspecialchars($matiere['nom_matiere'], ENT_QUOTES, 'UTF-8'); ?></option>
+                                                                <?php else: ?>
+                                                                    <option value="<?php echo (int)$matiere['id_matiere']; ?>"><?php echo htmlspecialchars($matiere['nom_matiere'], ENT_QUOTES, 'UTF-8'); ?></option>
+                                                                <?php endif; ?>
+                                                            <?php endforeach; ?>
+                                                        </select>
+                                                    </div>
+                                                    <div class="col-md-3 mb-2">
+                                                        <label class="form-label">Tarif (€)</label>
+                                                        <input type="number" class="form-control" name="tarif_horaire" step="0.01" min="0" value="<?php echo htmlspecialchars($offre['tarif_horaire_defaut'], ENT_QUOTES, 'UTF-8'); ?>" required>
+                                                    </div>
+                                                </div>
+                                                <div class="mb-2">
+                                                    <label class="form-label">Description</label>
+                                                    <textarea class="form-control" name="description" rows="2"><?php echo htmlspecialchars($offre['description'], ENT_QUOTES, 'UTF-8'); ?></textarea>
+                                                </div>
+                                                <button type="submit" class="btn btn-sm btn-primary"><i class="fas fa-save me-1"></i>Enregistrer</button>
+                                            </form>
+                                        </div>
                                     </div>
                                 <?php endforeach; ?>
                             <?php endif; ?>
                         </div>
                     </div>
-
                     <div class="card-custom mb-4">
                         <div class="card-header-custom">
                             <h5><i class="fas fa-calendar-alt me-2"></i>Mes disponibilités</h5>
@@ -353,7 +449,7 @@ try {
                                                 <?php endif; ?>
                                                 <div class="mt-2">
                                                     <?php foreach ($slotModes as $mode): ?>
-                                                        <?php if ($mode === '') continue; ?>
+                                                        <?php if ($mode === '') { continue; } ?>
                                                         <span class="badge bg-light text-dark me-1 mb-1"><?php echo htmlspecialchars($mode, ENT_QUOTES, 'UTF-8'); ?></span>
                                                     <?php endforeach; ?>
                                                 </div>
@@ -546,27 +642,6 @@ try {
                         </div>
                     </div>
 
-                    <div class="card-custom">
-                        <div class="card-header-custom">
-                            <h5><i class="fas fa-chart-bar me-2"></i>Statistiques</h5>
-                        </div>
-                        <div class="card-body-custom">
-                            <div class="row text-center">
-                                <div class="col-6">
-                                    <div class="border rounded p-3">
-                                        <h4 class="text-primary"><?php echo (int)$sessionsMonth; ?></h4>
-                                        <small>Sessions ce mois</small>
-                                    </div>
-                                </div>
-                                <div class="col-6">
-                                    <div class="border rounded p-3">
-                                        <h4 class="text-success"><?php echo (int)$totalHeures; ?>h</h4>
-                                        <small>Total heures</small>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
                 </div>
             </div>
         </div>
@@ -586,6 +661,22 @@ try {
                     }
                 });
             }
+
+            var editButtons = document.querySelectorAll('.offer-edit-btn');
+            editButtons.forEach(function(btn) {
+                btn.addEventListener('click', function() {
+                    var targetId = this.getAttribute('data-target');
+                    var block = document.getElementById(targetId);
+                    if (!block) {
+                        return;
+                    }
+                    if (block.style.display === 'none' || block.style.display === '') {
+                        block.style.display = 'block';
+                    } else {
+                        block.style.display = 'none';
+                    }
+                });
+            });
         });
     </script>
     <?php require __DIR__ . '/../templates/footer.php'; ?>
