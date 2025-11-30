@@ -6,6 +6,18 @@ function safe_session_start()
     if (session_status() !== PHP_SESSION_ACTIVE) {
         session_start();
     }
+
+    if (isset($_SESSION['user_id'])) {
+        // Check for inactivity
+        if (defined('SESSION_LIFETIME') && isset($_SESSION['last_activity']) && (time() - $_SESSION['last_activity'] > SESSION_LIFETIME)) {
+            session_unset();
+            session_destroy();
+            header("Location: /prof-it/auth/auth.php?timeout=1");
+            exit();
+        }
+        // Update last activity time
+        $_SESSION['last_activity'] = time();
+    }
 }
 
 function csrf_field()
@@ -103,7 +115,7 @@ function compute_course_status($dateDebut, $dateFin, $statutReservation)
         return 'termine';
     }
 
-    if ($statutReservation === 'confirmee' && $start <= $now && $end >= $now) {
+    if (($statutReservation === 'confirmee' || $statutReservation === 'en_attente') && $start <= $now && $end >= $now) {
         return 'en_cours';
     }
 

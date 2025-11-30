@@ -294,10 +294,10 @@ $userId = $_SESSION['user_id'] ?? null;
                     return `
                         <div class="col-6 mb-3">
                             <div class="time-slot" onclick="selectTimeSlot(${slot.id_creneau})" data-slot-id="${slot.id_creneau}">
-                                <div>${timeRange}</div>
-                                <small>${dateStr}</small>
-                                <small class="d-block text-primary">${escapeHtml(slot.nom_professeur)}</small>
-                                <small class="d-block">${escapeHtml(slot.nom_matiere || 'Cours')}</small>
+                                <div class="fw-bold">${escapeHtml(slot.titre_cours || 'Cours')}</div>
+                                <small class="d-block text-primary">${escapeHtml(slot.nom_matiere || '')}</small>
+                                <div class="text-muted small mt-1">${dateStr} - ${timeRange}</div>
+                                <small class="d-block text-muted">Prof : ${escapeHtml(slot.nom_professeur)}</small>
                             </div>
                         </div>
                     `;
@@ -371,7 +371,8 @@ $userId = $_SESSION['user_id'] ?? null;
                     <div class="border rounded-3 p-3 mb-3">
                         <div class="d-flex flex-wrap gap-3 align-items-center">
                             <div class="flex-grow-1">
-                                <h6 class="mb-1">${escapeHtml(course.nom_matiere || course.titre || 'Cours')}</h6>
+                                <h6 class="mb-0">${escapeHtml(course.titre || 'Cours')}</h6>
+                                <p class="mb-1 text-primary small">${escapeHtml(course.nom_matiere || '')}</p>
                                 <p class="mb-1 text-muted small"><i class="fas fa-user me-1"></i>${escapeHtml(course.nom_professeur || '')}</p>
                                 <p class="mb-1 text-muted small"><i class="fas fa-clock me-1"></i>${priceLabel}</p>
                                 <p class="mb-0 text-muted small"><i class="fas fa-layer-group me-1"></i>${modesLabel}</p>
@@ -473,7 +474,7 @@ $userId = $_SESSION['user_id'] ?? null;
                 }
 
                 container.innerHTML = appointments.map(appt => {
-                    const status = getRdvStatus(appt.statut_reservation);
+                    const status = getRdvStatus(appt.statut_reservation, appt.statut_cours);
 
                     const modeIcons = {
                         'presentiel': 'fa-building',
@@ -495,7 +496,7 @@ $userId = $_SESSION['user_id'] ?? null;
                             <p class="mb-1 text-muted small"><i class="fas fa-user me-2"></i>${escapeHtml(appt.nom_professeur)}</p>
                             <p class="mb-1 text-muted small"><i class="fas fa-calendar me-2"></i>${dateTimeStr}</p>
                             <p class="mb-1 text-muted small"><i class="fas ${modeIcon} me-2"></i>${ucFirst(appt.mode_choisi)}</p>
-                            <p class="mb-0 text-muted small"><i class="fas fa-flag me-2"></i>${formatCourseStatus(appt.statut_cours)}</p>
+                                ${appt.lieu ? `<p class="mb-0 text-muted small"><i class="fas fa-location-dot me-2"></i>${escapeHtml(appt.lieu)}</p>` : ''}
                         </div>
                     `;
                 }).join('');
@@ -528,7 +529,7 @@ $userId = $_SESSION['user_id'] ?? null;
             }
 
             function renderStudentManageItem(appt) {
-                const status = getRdvStatus(appt.statut_reservation);
+                const status = getRdvStatus(appt.statut_reservation, appt.statut_cours);
                 const dateDebut = new Date(appt.date_debut);
                 const dateFin = new Date(appt.date_fin);
                 const modeIcons = {
@@ -538,6 +539,15 @@ $userId = $_SESSION['user_id'] ?? null;
                 };
                 const modeIcon = modeIcons[appt.mode_choisi] || 'fa-question';
 
+                let pdfButton = '';
+                if (appt.statut_reservation === 'terminee' || appt.statut_reservation === 'confirmee' || appt.statut_cours === 'termine') {
+                    pdfButton = `
+                        <a href="export_pdf.php?id=${appt.id_reservation}" class="btn btn-sm btn-outline-danger ms-2" title="Télécharger le reçu PDF" target="_blank">
+                            <i class="fas fa-file-pdf"></i>
+                        </a>
+                    `;
+                }
+
                 return `
                     <div class="border rounded p-3 mb-3">
                         <div class="d-flex justify-content-between align-items-start">
@@ -546,9 +556,12 @@ $userId = $_SESSION['user_id'] ?? null;
                                 <p class="mb-1 text-muted small"><i class="fas fa-user me-1"></i>${escapeHtml(appt.nom_professeur || '')}</p>
                                 <p class="mb-1 text-muted small"><i class="fas fa-calendar me-1"></i>${formatDateTimeFr(dateDebut)} - ${formatTime(dateFin)}</p>
                                 <p class="mb-1 text-muted small"><i class="fas ${modeIcon} me-1"></i>${ucFirst(appt.mode_choisi)}</p>
-                                <p class="mb-0 text-muted small"><i class="fas fa-flag me-1"></i>${formatCourseStatus(appt.statut_cours)}</p>
+                                ${appt.lieu ? `<p class="mb-0 text-muted small"><i class="fas fa-location-dot me-1"></i>${escapeHtml(appt.lieu)}</p>` : ''}
                             </div>
-                            <span class="badge-status ${status.class}">${status.label}</span>
+                            <div class="d-flex flex-column align-items-end">
+                                <span class="badge-status ${status.class} mb-2">${status.label}</span>
+                                ${pdfButton}
+                            </div>
                         </div>
                     </div>
                 `;
@@ -585,7 +598,10 @@ $userId = $_SESSION['user_id'] ?? null;
                 `;
             }
 
-            function getRdvStatus(status) {
+            function getRdvStatus(status, courseStatus = '') {
+                if (courseStatus === 'termine') {
+                    return { class: 'finished', label: 'Terminé' };
+                }
                 const map = {
                     'confirmee': { class: 'confirmed', label: 'Confirmé' },
                     'en_attente': { class: 'waiting', label: 'En attente' },

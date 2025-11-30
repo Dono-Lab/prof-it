@@ -98,13 +98,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             } elseif (count($cleanModes) === 0) {
                 $errorMessage = 'Choisissez au moins un mode.';
             } else {
-                $startTs = strtotime($dateDebut);
-                $endTs = strtotime($dateFin);
-                if ($startTs === false || $endTs === false) {
+                $startObj = DateTime::createFromFormat('Y-m-d\TH:i', $dateDebut);
+                $endObj = DateTime::createFromFormat('Y-m-d\TH:i', $dateFin);
+                if ($startObj === false || $endObj === false) {
                     $errorMessage = 'Format de date invalide.';
-                } elseif ($endTs <= $startTs) {
-                    $errorMessage = 'Fin doit être après début.';
                 } else {
+                    $startTs = $startObj->getTimestamp();
+                    $endTs = $endObj->getTimestamp();
+                    if ($startTs <= time()) {
+                        $errorMessage = 'La date de début doit être dans le futur.';
+                    }
+                    if ($errorMessage === '' && $endTs <= $startTs) {
+                        $errorMessage = 'Fin doit être après début.';
+                    }
+                }
+                if ($errorMessage === '') {
+                    $dateDebutSql = $startObj->format('Y-m-d H:i:s');
+                    $dateFinSql = $endObj->format('Y-m-d H:i:s');
                     try {
                         $stmt = $conn->prepare('SELECT id FROM enseigner WHERE id_offre = ? AND id_utilisateur = ? AND actif = 1');
                         $stmt->execute([$offreId, $userId]);
@@ -112,7 +122,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             $errorMessage = 'Offre non autorisée.';
                         } else {
                             $stmt = $conn->prepare('INSERT INTO creneau (id_utilisateur, id_offre, date_debut, date_fin, tarif_horaire, mode_propose, lieu, statut_creneau) VALUES (?, ?, ?, ?, ?, ?, ?, "disponible")');
-                            $stmt->execute([$userId, $offreId, $dateDebut, $dateFin, $tarifHoraire, implode(',', $cleanModes), $lieu]);
+                            $stmt->execute([$userId, $offreId, $dateDebutSql, $dateFinSql, $tarifHoraire, implode(',', $cleanModes), $lieu]);
                             $successMessage = 'Créneau ajouté.';
                         }
                     } catch (Exception $e) {
@@ -125,7 +135,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $newStatus = $_POST['new_status'] ?? '';
             if ($reservationId <= 0) {
                 $errorMessage = 'Réservation invalide.';
-            } elseif ($newStatus !== 'en_cours' && $newStatus !== 'terminee') {
+            } elseif ($newStatus !== 'confirmee' && $newStatus !== 'en_cours' && $newStatus !== 'terminee') {
                 $errorMessage = 'Statut non autorisé.';
             } else {
                 try {
@@ -137,6 +147,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     } else {
                         $current = $reservation['statut_reservation'];
                         $ok = true;
+                        if ($newStatus === 'confirmee' && $current !== 'en_attente') {
+                            $ok = false;
+                        }
                         if ($newStatus === 'en_cours' && $current !== 'confirmee') {
                             $ok = false;
                         }
@@ -246,7 +259,7 @@ try {
 }
 
 try {
-    $stmtSlots = $conn->prepare('SELECT c.id_creneau, c.date_debut, c.date_fin, c.tarif_horaire, c.mode_propose, c.lieu, o.titre AS titre_cours, m.nom_matiere FROM creneau c INNER JOIN offre_cours o ON c.id_offre = o.id_offre LEFT JOIN couvrir co ON o.id_offre = co.id_offre LEFT JOIN matiere m ON co.id_matiere = m.id_matiere WHERE c.id_utilisateur = ? AND c.statut_creneau = "disponible" AND c.date_debut > NOW() ORDER BY c.date_debut ASC');
+    $stmtSlots = $conn->prepare('SELECT c.id_creneau, c.date_debut, c.date_fin, c.tarif_horaire, c.mode_propose, c.lieu, o.titre AS titre_cours, m.nom_matiere FROM creneau c INNER JOIN offre_cours o ON c.id_offre = o.id_offre LEFT JOIN couvrir co ON o.id_offre = co.id_offre LEFT JOIN matiere m ON co.id_matiere = m.id_matiere WHERE c.id_utilisateur = ? AND c.statut_creneau = "disponible" AND c.date_debut >= NOW() ORDER BY c.date_debut ASC');
     $stmtSlots->execute([$userId]);
     $availableSlots = $stmtSlots->fetchAll();
 } catch (Exception $e) {
@@ -254,7 +267,7 @@ try {
 }
 
 try {
-    $stmtUpcoming = $conn->prepare('SELECT r.id_reservation, r.statut_reservation, r.mode_choisi, c.date_debut, c.date_fin, c.lieu, o.titre AS titre_cours, m.nom_matiere, CONCAT(etudiant.prenom, " ", etudiant.nom) AS nom_etudiant FROM creneau c INNER JOIN reservation r ON c.id_creneau = r.id_creneau INNER JOIN users etudiant ON r.id_utilisateur = etudiant.id INNER JOIN offre_cours o ON c.id_offre = o.id_offre LEFT JOIN couvrir co ON o.id_offre = co.id_offre LEFT JOIN matiere m ON co.id_matiere = m.id_matiere WHERE c.id_utilisateur = ? AND r.statut_reservation IN ("en_attente", "confirmee", "en_cours") AND c.date_fin >= NOW() ORDER BY c.date_debut ASC');
+    $stmtUpcoming = $conn->prepare('SELECT r.id_reservation, r.statut_reservation, r.mode_choisi, c.date_debut, c.date_fin, c.lieu, o.titre AS titre_cours, m.nom_matiere, CONCAT(etudiant.prenom, " ", etudiant.nom) AS nom_etudiant FROM creneau c INNER JOIN reservation r ON c.id_creneau = r.id_creneau INNER JOIN users etudiant ON r.id_utilisateur = etudiant.id INNER JOIN offre_cours o ON c.id_offre = o.id_offre LEFT JOIN couvrir co ON o.id_offre = co.id_offre LEFT JOIN matiere m ON co.id_matiere = m.id_matiere WHERE c.id_utilisateur = ? AND ((r.statut_reservation IN ("en_attente", "confirmee") AND c.date_fin >= NOW()) OR r.statut_reservation = "en_cours") ORDER BY c.date_debut ASC');
     $stmtUpcoming->execute([$userId]);
     $upcomingSessions = $stmtUpcoming->fetchAll();
 } catch (Exception $e) {
@@ -262,7 +275,7 @@ try {
 }
 
 try {
-    $stmtHistory = $conn->prepare('SELECT r.id_reservation, r.statut_reservation, r.mode_choisi, c.date_debut, c.date_fin, c.lieu, o.titre AS titre_cours, m.nom_matiere, CONCAT(etudiant.prenom, " ", etudiant.nom) AS nom_etudiant FROM creneau c INNER JOIN reservation r ON c.id_creneau = r.id_creneau INNER JOIN users etudiant ON r.id_utilisateur = etudiant.id INNER JOIN offre_cours o ON c.id_offre = o.id_offre LEFT JOIN couvrir co ON o.id_offre = co.id_offre LEFT JOIN matiere m ON co.id_matiere = m.id_matiere WHERE c.id_utilisateur = ? AND r.statut_reservation = "terminee" ORDER BY c.date_debut DESC LIMIT 10');
+    $stmtHistory = $conn->prepare('SELECT r.id_reservation, r.statut_reservation, r.mode_choisi, c.date_debut, c.date_fin, c.lieu, o.titre AS titre_cours, m.nom_matiere, CONCAT(etudiant.prenom, " ", etudiant.nom) AS nom_etudiant FROM creneau c INNER JOIN reservation r ON c.id_creneau = r.id_creneau INNER JOIN users etudiant ON r.id_utilisateur = etudiant.id INNER JOIN offre_cours o ON c.id_offre = o.id_offre LEFT JOIN couvrir co ON o.id_offre = co.id_offre LEFT JOIN matiere m ON co.id_matiere = m.id_matiere WHERE c.id_utilisateur = ? AND (r.statut_reservation = "terminee" OR c.date_fin < NOW()) ORDER BY c.date_debut DESC LIMIT 10');
     $stmtHistory->execute([$userId]);
     $historySessions = $stmtHistory->fetchAll();
 } catch (Exception $e) {
@@ -295,7 +308,6 @@ try {
                     <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                 </div>
             <?php endif; ?>
-
             <?php if ($errorMessage !== ''): ?>
                 <div class="alert alert-danger alert-dismissible fade show" role="alert">
                     <i class="fas fa-exclamation-triangle me-2"></i><?php echo htmlspecialchars($errorMessage, ENT_QUOTES, 'UTF-8'); ?>
@@ -432,7 +444,7 @@ try {
                                         <?php
                                         $slotTitle = $slot['titre_cours'];
                                         if (!empty($slot['nom_matiere'])) {
-                                            $slotTitle = $slot['nom_matiere'];
+                                            $slotTitle = $slot['titre_cours'];
                                         }
                                         $slotModes = [];
                                         if (!empty($slot['mode_propose'])) {
@@ -441,8 +453,11 @@ try {
                                         ?>
                                         <div class="col-md-6 mb-3">
                                             <div class="time-slot h-100">
-                                                <div class="fw-bold mb-1"><?php echo htmlspecialchars($slotTitle, ENT_QUOTES, 'UTF-8'); ?></div>
-                                                <div class="text-muted small"><?php echo htmlspecialchars(format_date_fr($slot['date_debut']), ENT_QUOTES, 'UTF-8'); ?> - <?php echo htmlspecialchars(date('H:i', strtotime($slot['date_fin'])), ENT_QUOTES, 'UTF-8'); ?></div>
+                                                <div class="fw-bold"><?php echo htmlspecialchars($slot['titre_cours'], ENT_QUOTES, 'UTF-8'); ?></div>
+                                                <?php if (!empty($slot['nom_matiere'])): ?>
+                                                    <div class="text-muted small"><?php echo htmlspecialchars($slot['nom_matiere'], ENT_QUOTES, 'UTF-8'); ?></div>
+                                                <?php endif; ?>
+                                                <div class="text-muted small mt-1"><?php echo htmlspecialchars(format_date_fr($slot['date_debut']), ENT_QUOTES, 'UTF-8'); ?> - <?php echo htmlspecialchars(date('H:i', strtotime($slot['date_fin'])), ENT_QUOTES, 'UTF-8'); ?></div>
                                                 <div class="small mt-1">Tarif : <?php echo number_format((float)$slot['tarif_horaire'], 2, ',', ' '); ?> €/h</div>
                                                 <?php if (!empty($slot['lieu'])): ?>
                                                     <div class="small text-muted"><i class="fas fa-location-dot me-1"></i><?php echo htmlspecialchars($slot['lieu'], ENT_QUOTES, 'UTF-8'); ?></div>
@@ -576,13 +591,13 @@ try {
                                             <?php endif; ?>
                                             <p class="mb-0 text-muted small"><i class="fas fa-info-circle me-2"></i>Status cours : <?php echo htmlspecialchars(course_status_label($courseStatus), ENT_QUOTES, 'UTF-8'); ?></p>
 
-                                            <?php if ($session['statut_reservation'] === 'confirmee'): ?>
+                                            <?php if ($session['statut_reservation'] === 'en_attente'): ?>
                                                 <form method="POST" class="mt-2">
                                                     <input type="hidden" name="csrf_token" value="<?php echo csrf_token(); ?>">
                                                     <input type="hidden" name="update_status" value="1">
                                                     <input type="hidden" name="reservation_id" value="<?php echo (int)$session['id_reservation']; ?>">
-                                                    <input type="hidden" name="new_status" value="en_cours">
-                                                    <button type="submit" class="btn btn-sm btn-success w-100"><i class="fas fa-play me-1"></i>Marquer en cours</button>
+                                                    <input type="hidden" name="new_status" value="confirmee">
+                                                    <button type="submit" class="btn btn-sm btn-warning w-100"><i class="fas fa-check-double me-1"></i>Confirmer</button>
                                                 </form>
                                             <?php elseif ($session['statut_reservation'] === 'en_cours'): ?>
                                                 <form method="POST" class="mt-2">
@@ -635,6 +650,9 @@ try {
                                             </div>
                                             <p class="mb-1 text-muted small"><i class="fas fa-user-graduate me-2"></i><?php echo htmlspecialchars($session['nom_etudiant'], ENT_QUOTES, 'UTF-8'); ?></p>
                                             <p class="mb-0 text-muted small"><i class="fas fa-calendar me-2"></i><?php echo format_date_fr($session['date_debut']); ?> - <?php echo date('H:i', strtotime($session['date_fin'])); ?></p>
+                                            <a class="btn btn-sm btn-outline-danger w-100 mt-2" href="export_pdf.php?id=<?php echo (int)$session['id_reservation']; ?>" target="_blank">
+                                                <i class="fas fa-file-pdf me-1"></i>Telecharger le recap PDF
+                                            </a>
                                         </div>
                                     <?php endforeach; ?>
                                 </div>
@@ -682,3 +700,5 @@ try {
     <?php require __DIR__ . '/../templates/footer.php'; ?>
 </body>
 </html>
+
+

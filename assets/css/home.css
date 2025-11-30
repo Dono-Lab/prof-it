@@ -29,9 +29,10 @@ h1 span {
     display: block;
     margin-top: 10px;
 }
+
 .header-container {
     display: flex;
-    justify-content: space-between; 
+    justify-content: space-between;
     align-items: center;
     position: relative;
     min-height: 60px;
@@ -49,25 +50,25 @@ header {
     color: white;
     position: sticky;
     top: 0;
-    z-index: 100;
+    z-index: 10000;
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
 }
 
 .header-content {
     display: flex;
     align-items: center;
-    justify-content: space-between; 
+    justify-content: space-between;
 
 }
 
 nav {
     position: absolute;
     left: 50%;
-    transform: translateX(-50%);  
+    transform: translateX(-50%);
 }
 
 #logo {
-    max-width: 80px;  
+    max-width: 80px;
 }
 
 .logo {
@@ -104,7 +105,7 @@ nav ul li a {
     transition: color 0.3s;
     border-radius: 4px;
     font-size: clamp(12px, 1.5vw, 18px);
-    white-space: nowrap; 
+    white-space: nowrap;
 }
 
 nav ul li a:hover {
@@ -117,22 +118,23 @@ nav ul li a:hover {
     align-items: end;
 }
 
-.row{
+.row {
     display: flex;
-    justify-content: center;  
+    justify-content: center;
     align-items: center;
-    gap: 2rem;  
+    gap: 2rem;
     flex-wrap: wrap;
 }
-.container-2{
+
+.container-2 {
     max-width: 600px;
-    margin: 0 auto;  
+    margin: 0 auto;
     padding: 40px;
 }
 
 
-.card h-100{ 
-    width: 300px;  
+.card h-100 {
+    width: 300px;
     flex-shrink: 0;
 }
 
@@ -167,7 +169,7 @@ nav ul li a:hover {
 .hero {
     background: linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.7)), url('https://images.unsplash.com/photo-1497215728101-856f4ea42174?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1170&q=80') no-repeat center center/cover;
     color: white;
-    padding: 6rem 0;
+    padding: 2.4rem 0 2rem;
     text-align: center;
 }
 
@@ -253,6 +255,7 @@ nav ul li a:hover {
 .search-button:hover {
     background-color: #2980b9;
 }
+
 .search-results {
     padding: 3rem 0;
     background-color: #f8f9fa;
@@ -354,6 +357,7 @@ nav ul li a:hover {
     margin-bottom: 1rem;
     color: #bdc3c7;
 }
+
 .features {
     padding: 5rem 0;
     background-color: white;
@@ -380,7 +384,7 @@ nav ul li a:hover {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
     gap: 2rem;
-    justify-items: center; 
+    justify-items: center;
 }
 
 .feature-card {
@@ -407,22 +411,23 @@ nav ul li a:hover {
     margin-bottom: 1rem;
     color: #2c3e50;
 }
+
 #map {
-        height: 400px;
-        border-radius: 10px;
-        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-    }
+    height: 400px;
+    border-radius: 10px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+}
 
 .custom-marker {
-        background: #1898e9;
-        border: 3px solid white;
-        border-radius: 50%;
-        width: 20px;
-        height: 20px;
-        box-shadow: 0 2px 5px rgba(0,0,0,0.3);
-        cursor: pointer;
+    background: #1898e9;
+    border: 3px solid white;
+    border-radius: 50%;
+    width: 20px;
+    height: 20px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+    cursor: pointer;
 }
-    
+
 .marker-popup {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
@@ -608,27 +613,28 @@ footer {
 
 @media (max-width: 768px) {
     .container {
-        flex-direction: column;  
+        flex-direction: column;
         gap: 15px;
         padding: 15px;
         min-height: auto;
     }
 
     nav {
-        position: static; 
-        transform: none;  
+        position: static;
+        transform: none;
     }
+
     #logo {
-        max-width: 60px; 
+        max-width: 60px;
     }
 
     nav ul {
-        gap: 1rem;  
+        gap: 1rem;
         flex-wrap: wrap;
     }
 
     nav ul li a {
-        font-size: 14px;  
+        font-size: 14px;
         padding: 8px 12px;
     }
 
@@ -645,7 +651,7 @@ footer {
     nav ul {
         gap: 1.5rem;
     }
-    
+
     nav ul li a {
         font-size: 16px;
     }
@@ -693,3 +699,4 @@ footer {
         padding: 12px;
     }
 }
+

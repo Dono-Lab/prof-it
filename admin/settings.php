@@ -64,40 +64,73 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if ($stmtCheck->rowCount() > 0) {
             $errorMessage = 'Cet email est déjà utilisé par un autre compte.';
         } else {
-            try {
-                if ($changePassword && $password !== '') {
-                    $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
-                    $stmtUpdate = $conn->prepare("
-                        UPDATE users
-                        SET nom = ?, prenom = ?, email = ?, telephone = ?, adresse = ?, ville = ?, code_postal = ?, bio = ?, password = ?
-                        WHERE id = ?
-                    ");
-                    $stmtUpdate->execute([$nom, $prenom, $email, $telephone, $adresse, $ville, $code_postal, $bio, $hashedPassword, $userId]);
+            // Handle Avatar Upload
+            $photoUrl = $user['photo_url']; // Default to current
+            if (isset($_FILES['avatar']) && $_FILES['avatar']['error'] !== UPLOAD_ERR_NO_FILE) {
+                if ($_FILES['avatar']['error'] === UPLOAD_ERR_OK) {
+                    $allowedTypes = ['image/jpeg' => 'jpg', 'image/png' => 'png', 'image/gif' => 'gif'];
+                    $type = $_FILES['avatar']['type'];
+                    $size = $_FILES['avatar']['size'];
+                    
+                    if (!isset($allowedTypes[$type])) {
+                        $errorMessage = 'Format d\'image invalide (JPG, PNG, GIF).';
+                    } elseif ($size > 2 * 1024 * 1024) {
+                        $errorMessage = 'L\'image est trop volumineuse (Max 2Mo).';
+                    } else {
+                        $ext = $allowedTypes[$type];
+                        $filename = 'admin_' . $userId . '_' . time() . '.' . $ext;
+                        $targetDir = __DIR__ . '/../assets/img/avatars';
+                        if (!is_dir($targetDir)) mkdir($targetDir, 0755, true);
+                        
+                        if (move_uploaded_file($_FILES['avatar']['tmp_name'], $targetDir . '/' . $filename)) {
+                            $photoUrl = 'assets/img/avatars/' . $filename;
+                            $_SESSION['avatar_url'] = $photoUrl;
+                        } else {
+                            $errorMessage = 'Erreur lors de l\'enregistrement de l\'image.';
+                        }
+                    }
                 } else {
-                    $stmtUpdate = $conn->prepare("
-                        UPDATE users
-                        SET nom = ?, prenom = ?, email = ?, telephone = ?, adresse = ?, ville = ?, code_postal = ?, bio = ?
-                        WHERE id = ?
-                    ");
-                    $stmtUpdate->execute([$nom, $prenom, $email, $telephone, $adresse, $ville, $code_postal, $bio, $userId]);
+                    $errorMessage = 'Erreur lors du téléchargement de l\'image.';
                 }
+            }
 
-                $_SESSION['name'] = $nom;
-                $_SESSION['prenom'] = $prenom;
-                $_SESSION['email'] = $email;
+            if (!$errorMessage) {
+                try {
+                    if ($changePassword && $password !== '') {
+                        $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
+                        $stmtUpdate = $conn->prepare("
+                            UPDATE users
+                            SET nom = ?, prenom = ?, email = ?, telephone = ?, adresse = ?, ville = ?, code_postal = ?, bio = ?, password = ?, photo_url = ?
+                            WHERE id = ?
+                        ");
+                        $stmtUpdate->execute([$nom, $prenom, $email, $telephone, $adresse, $ville, $code_postal, $bio, $hashedPassword, $photoUrl, $userId]);
+                    } else {
+                        $stmtUpdate = $conn->prepare("
+                            UPDATE users
+                            SET nom = ?, prenom = ?, email = ?, telephone = ?, adresse = ?, ville = ?, code_postal = ?, bio = ?, photo_url = ?
+                            WHERE id = ?
+                        ");
+                        $stmtUpdate->execute([$nom, $prenom, $email, $telephone, $adresse, $ville, $code_postal, $bio, $photoUrl, $userId]);
+                    }
 
-                $successMessage = 'Paramètres mis à jour avec succès.';
+                    $_SESSION['name'] = $nom;
+                    $_SESSION['prenom'] = $prenom;
+                    $_SESSION['email'] = $email;
 
-                $user['nom'] = $nom;
-                $user['prenom'] = $prenom;
-                $user['email'] = $email;
-                $user['telephone'] = $telephone;
-                $user['adresse'] = $adresse;
-                $user['ville'] = $ville;
-                $user['code_postal'] = $code_postal;
-                $user['bio'] = $bio;
-            } catch (PDOException $e) {
-                $errorMessage = 'Erreur lors de la mise à jour des paramètres.';
+                    $successMessage = 'Paramètres mis à jour avec succès.';
+
+                    $user['nom'] = $nom;
+                    $user['prenom'] = $prenom;
+                    $user['email'] = $email;
+                    $user['telephone'] = $telephone;
+                    $user['adresse'] = $adresse;
+                    $user['ville'] = $ville;
+                    $user['code_postal'] = $code_postal;
+                    $user['bio'] = $bio;
+                    $user['photo_url'] = $photoUrl;
+                } catch (PDOException $e) {
+                    $errorMessage = 'Erreur lors de la mise à jour des paramètres.';
+                }
             }
         }
     }
@@ -125,7 +158,7 @@ require_once __DIR__ . '/includes/sidebar.php';
             </div>
         <?php endif; ?>
 
-        <form method="post" id="settingsForm">
+        <form method="post" id="settingsForm" enctype="multipart/form-data">
             <?= csrf_field() ?>
 
             <div class="row g-4">
@@ -171,16 +204,10 @@ require_once __DIR__ . '/includes/sidebar.php';
 
                             <div class="mb-0">
                                 <label class="form-label fw-bold"><i class="fas fa-upload me-2"></i>Ou télécharger un avatar personnalisé</label>
-                                <form method="post" action="upload_avatar.php" enctype="multipart/form-data" id="uploadAvatarForm">
-                                    <?= csrf_field() ?>
-                                    <div class="input-group">
-                                        <input type="file" class="form-control" name="avatar" accept="image/*" required>
-                                        <button type="submit" class="btn btn-primary">
-                                            <i class="fas fa-cloud-upload-alt me-1"></i>Télécharger
-                                        </button>
-                                    </div>
-                                    <small class="text-muted">Formats acceptés : JPEG, PNG ou GIF. Taille maximale : 2 Mo</small>
-                                </form>
+                                <div class="input-group">
+                                    <input type="file" class="form-control" name="avatar" accept="image/*">
+                                </div>
+                                <small class="text-muted">Formats acceptés : JPEG, PNG ou GIF. Taille maximale : 2 Mo</small>
                             </div>
                         </div>
                     </div>
