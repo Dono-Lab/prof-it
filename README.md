@@ -59,7 +59,7 @@ Prof-IT est une plateforme web de gestion pédagogique facilitant les interactio
 ### Étapes
 1.  **Cloner le projet** dans le dossier racine de votre serveur web (ex: `htdocs` ou `www`).
     ```bash
-    git clone https://github.com/votre-repo/prof-it.git
+    git clone https://github.com/Dono-Lab/prof-it.git
     ```
 
 2.  **Base de Données** :
