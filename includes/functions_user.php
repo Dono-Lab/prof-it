@@ -1,10 +1,5 @@
 <?php
-/**
- * Récupère l'URL de l'avatar utilisateur
- * @param int $user_id ID de l'utilisateur
- * @param PDO $conn Connexion à la base de données
- * @return string URL de l'avatar
- */
+
 function get_user_avatar($user_id, $conn) {
     $stmt = $conn->prepare("SELECT photo_url, prenom, nom FROM users WHERE id = ?");
     $stmt->execute([$user_id]);
@@ -14,17 +9,10 @@ function get_user_avatar($user_id, $conn) {
         return '../' . ltrim($user['photo_url'], '/');
     }
 
-    // Avatar par défaut avec UI Avatars
     $name = urlencode(($user['prenom'] ?? '') . ' ' . ($user['nom'] ?? 'Utilisateur'));
     return "https://ui-avatars.com/api/?name=$name&background=6366f1&color=fff";
 }
 
-/**
- * Récupère les statistiques d'un étudiant
- * @param int $user_id ID de l'étudiant
- * @param PDO $conn Connexion à la base de données
- * @return array Tableau des statistiques
- */
 function get_student_stats($user_id, $conn) {
     $stats = [
         'cours_termines' => 0,
@@ -33,7 +21,6 @@ function get_student_stats($user_id, $conn) {
         'depenses_total' => 0
     ];
 
-    // Nombre de cours terminés
     $stmt = $conn->prepare("
         SELECT COUNT(*) as nb_cours
         FROM reservation
@@ -77,12 +64,6 @@ function get_student_stats($user_id, $conn) {
     return $stats;
 }
 
-/**
- * Récupère les statistiques d'un professeur
- * @param int $user_id ID du professeur
- * @param PDO $conn Connexion à la base de données
- * @return array Tableau des statistiques
- */
 function get_teacher_stats($user_id, $conn) {
     $stats = [
         'nb_etudiants' => 0,
@@ -136,15 +117,8 @@ function get_teacher_stats($user_id, $conn) {
     return $stats;
 }
 
-/**
- * Récupère les prochains cours d'un étudiant
- * @param int $user_id ID de l'étudiant
- * @param PDO $conn Connexion à la base de données
- * @param int $limit Nombre maximum de cours à retourner
- * @return array Liste des prochains cours
- */
 function get_student_upcoming_courses($user_id, $conn, $limit = 5) {
-    $limit = (int)$limit; // Sécurisation du paramètre
+    $limit = (int)$limit;
     $stmt = $conn->prepare("
         SELECT
             r.id_reservation,
@@ -174,13 +148,6 @@ function get_student_upcoming_courses($user_id, $conn, $limit = 5) {
     return $stmt->fetchAll();
 }
 
-/**
- * Récupère les prochaines sessions d'un professeur
- * @param int $user_id ID du professeur
- * @param PDO $conn Connexion à la base de données
- * @param int $limit Nombre maximum de sessions à retourner
- * @return array Liste des prochaines sessions
- */
 function get_teacher_upcoming_sessions($user_id, $conn, $limit = 5) {
     $limit = (int)$limit; 
     $stmt = $conn->prepare("
@@ -219,15 +186,8 @@ function get_teacher_upcoming_sessions($user_id, $conn, $limit = 5) {
     return $sessions;
 }
 
-/**
- * Récupère les créneaux disponibles d'un professeur
- * @param int $user_id ID du professeur
- * @param PDO $conn Connexion à la base de données
- * @param int $limit Nombre maximum de créneaux à retourner
- * @return array Liste des créneaux disponibles
- */
 function get_teacher_available_slots($user_id, $conn, $limit = 5) {
-    $limit = (int)$limit; // Sécurisation du paramètre
+    $limit = (int)$limit;
     $stmt = $conn->prepare("
         SELECT
             c.id_creneau,
@@ -331,12 +291,6 @@ function get_user_document_stats($user_id, $conn) {
     return $stats;
 }
 
-/**
- * Calcule le pourcentage de complétion du profil
- * @param int $user_id ID de l'utilisateur
- * @param PDO $conn Connexion à la base de données
- * @return int Pourcentage de complétion (0-100)
- */
 function get_profile_completion($user_id, $conn) {
     $stmt = $conn->prepare("
         SELECT nom, prenom, email, telephone, adresse, ville, code_postal, bio, photo_url
@@ -362,11 +316,6 @@ function get_profile_completion($user_id, $conn) {
     return round(($filled / $total) * 100);
 }
 
-/**
- * Formate une date en français
- * @param string $date Date au format SQL
- * @return string Date formatée
- */
 function format_date_fr($date) {
     if (empty($date)) {
         return '';
@@ -384,11 +333,6 @@ function format_date_fr($date) {
     return "$jour_semaine $jour $mois_nom à $heure";
 }
 
-/**
- * Formate une date en format relatif (Il y a X heures/jours)
- * @param string $dateStr Date au format SQL
- * @return string Date relative formatée
- */
 function format_relative_date($dateStr) {
     $date = strtotime($dateStr);
     $now = time();
@@ -409,11 +353,6 @@ function format_relative_date($dateStr) {
     }
 }
 
-/**
- * Retourne la classe Bootstrap pour une priorité
- * @param string
- * @return string 
- */
 function get_priority_color($priority) {
     $colors = [
         'basse' => 'secondary',

@@ -64,8 +64,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if ($stmtCheck->rowCount() > 0) {
             $errorMessage = 'Cet email est déjà utilisé par un autre compte.';
         } else {
-            // Handle Avatar Upload
-            $photoUrl = $user['photo_url']; // Default to current
+            $photoUrl = $user['photo_url'];
             if (isset($_FILES['avatar']) && $_FILES['avatar']['error'] !== UPLOAD_ERR_NO_FILE) {
                 if ($_FILES['avatar']['error'] === UPLOAD_ERR_OK) {
                     $allowedTypes = ['image/jpeg' => 'jpg', 'image/png' => 'png', 'image/gif' => 'gif'];

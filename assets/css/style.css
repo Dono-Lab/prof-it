@@ -100,6 +100,7 @@ nav ul li a:hover {
     font-size: 1.2rem;
     opacity: 0.9;
 }
+
 .auth-buttons {
     display: flex;
     gap: 15px;
@@ -166,9 +167,17 @@ nav ul li a:hover {
     font-size: 3rem;
 }
 
-.text-primary { color: #1898e9 !important; }
-.text-success { color: #28a745 !important; }
-.text-warning { color: #ffc107 !important; }
+.text-primary {
+    color: #1898e9 !important;
+}
+
+.text-success {
+    color: #28a745 !important;
+}
+
+.text-warning {
+    color: #ffc107 !important;
+}
 
 #user-welcome {
     background: #7494ec !important;
@@ -237,153 +246,168 @@ nav ul li a:hover {
     nav ul {
         gap: 1.5rem;
     }
-    
+
     nav ul li a {
         font-size: 16px;
     }
 }
-        calendar-container {
-            background: white;
-            border-radius: 12px;
-            padding: 2rem;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
-            margin-bottom: 2rem;
-        }
-        
-        .appointment-card {
-            background: white;
-            border-radius: 10px;
-            padding: 1.5rem;
-            margin-bottom: 1rem;
-            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
-            border-left: 4px solid #1898e9;
-        }
-        
-        .appointment-status {
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 0.9rem;
-            font-weight: 500;
-        }
-        
-        .status-confirmed {
-            background: #d4edda;
-            color: #155724;
-        }
-        
-        .status-pending {
-            background: #fff3cd;
-            color: #856404;
-        }
-        
-        .status-cancelled {
-            background: #f8d7da;
-            color: #721c24;
-        }
-        
-        .time-slot {
-            background: #f8f9fa;
-            border: 2px dashed #dee2e6;
-            border-radius: 8px;
-            padding: 1rem;
-            text-align: center;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
-        
-        .time-slot:hover {
-            background: #e9ecef;
-            border-color: #1898e9;
-        }
-        
-        .time-slot.selected {
-            background: #1898e9;
-            color: white;
-            border-color: #1898e9;
-        }
 
-        .documents-container {
-            background: white;
-            border-radius: 12px;
-            padding: 2rem;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
-            margin-bottom: 2rem;
-        }
-        
-        .document-card {
-            background: white;
-            border-radius: 10px;
-            padding: 1.5rem;
-            margin-bottom: 1rem;
-            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
-            border-left: 4px solid #1898e9;
-            transition: transform 0.3s;
-        }
-        
-        .document-card:hover {
-            transform: translateY(-2px);
-        }
-        
-        .document-icon {
-            width: 50px;
-            height: 50px;
-            border-radius: 10px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.5rem;
-            margin-right: 1rem;
-        }
-        
-        .icon-pdf { background: #ff6b6b; color: white; }
-        .icon-word { background: #2b579a; color: white; }
-        .icon-excel { background: #217346; color: white; }
-        .icon-powerpoint { background: #d24726; color: white; }
-        .icon-image { background: #9b59b6; color: white; }
-        
-        .document-actions {
-            opacity: 0;
-            transition: opacity 0.3s;
-        }
-        
-        .document-card:hover .document-actions {
-            opacity: 1;
-        }
-        
-        .upload-area {
-            border: 2px dashed #dee2e6;
-            border-radius: 10px;
-            padding: 3rem;
-            text-align: center;
-            background: #f8f9fa;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
-        
-        .upload-area:hover {
-            border-color: #1898e9;
-            background: #e3f2fd;
-        }
-        
-        .folder-card {
-            background: white;
-            border-radius: 10px;
-            padding: 1.5rem;
-            text-align: center;
-            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
-            transition: transform 0.3s;
-            cursor: pointer;
-        }
-        
-        .folder-card:hover {
-            transform: translateY(-3px);
-        }
+calendar-container {
+    background: white;
+    border-radius: 12px;
+    padding: 2rem;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+    margin-bottom: 2rem;
+}
 
-/* ========================================
-   DESIGN SYSTEM ADMIN - Classes Modernes
-   ======================================== */
+.appointment-card {
+    background: white;
+    border-radius: 10px;
+    padding: 1.5rem;
+    margin-bottom: 1rem;
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
+    border-left: 4px solid #1898e9;
+}
 
-/* Card System */
+.appointment-status {
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+.status-confirmed {
+    background: #d4edda;
+    color: #155724;
+}
+
+.status-pending {
+    background: #fff3cd;
+    color: #856404;
+}
+
+.status-cancelled {
+    background: #f8d7da;
+    color: #721c24;
+}
+
+.time-slot {
+    background: #f8f9fa;
+    border: 2px dashed #dee2e6;
+    border-radius: 8px;
+    padding: 1rem;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.time-slot:hover {
+    background: #e9ecef;
+    border-color: #1898e9;
+}
+
+.time-slot.selected {
+    background: #1898e9;
+    color: white;
+    border-color: #1898e9;
+}
+
+.documents-container {
+    background: white;
+    border-radius: 12px;
+    padding: 2rem;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+    margin-bottom: 2rem;
+}
+
+.document-card {
+    background: white;
+    border-radius: 10px;
+    padding: 1.5rem;
+    margin-bottom: 1rem;
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
+    border-left: 4px solid #1898e9;
+    transition: transform 0.3s;
+}
+
+.document-card:hover {
+    transform: translateY(-2px);
+}
+
+.document-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    margin-right: 1rem;
+}
+
+.icon-pdf {
+    background: #ff6b6b;
+    color: white;
+}
+
+.icon-word {
+    background: #2b579a;
+    color: white;
+}
+
+.icon-excel {
+    background: #217346;
+    color: white;
+}
+
+.icon-powerpoint {
+    background: #d24726;
+    color: white;
+}
+
+.icon-image {
+    background: #9b59b6;
+    color: white;
+}
+
+.document-actions {
+    opacity: 0;
+    transition: opacity 0.3s;
+}
+
+.document-card:hover .document-actions {
+    opacity: 1;
+}
+
+.upload-area {
+    border: 2px dashed #dee2e6;
+    border-radius: 10px;
+    padding: 3rem;
+    text-align: center;
+    background: #f8f9fa;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.upload-area:hover {
+    border-color: #1898e9;
+    background: #e3f2fd;
+}
+
+.folder-card {
+    background: white;
+    border-radius: 10px;
+    padding: 1.5rem;
+    text-align: center;
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
+    transition: transform 0.3s;
+    cursor: pointer;
+}
+
+.folder-card:hover {
+    transform: translateY(-3px);
+}
+
 .card-custom {
     background: white;
     border-radius: 12px;
@@ -411,7 +435,6 @@ nav ul li a:hover {
     padding: 24px;
 }
 
-/* Stat Cards */
 .stat-card {
     background: white;
     border-radius: 12px;
@@ -427,7 +450,7 @@ nav ul li a:hover {
     justify-content: center;
 }
 
-.stats-row > .col {
+.stats-row>.col {
     display: flex;
 }
 
@@ -499,7 +522,6 @@ nav ul li a:hover {
     margin: 4px 0 0;
 }
 
-/* Badge Status System */
 .badge-status {
     padding: 6px 14px;
     border-radius: 20px;
@@ -550,7 +572,6 @@ nav ul li a:hover {
     }
 }
 
-/* Chat/Messaging Interface */
 .chat-container {
     display: flex;
     height: calc(100vh - 300px);
@@ -617,7 +638,6 @@ nav ul li a:hover {
     border-bottom-left-radius: 4px;
 }
 
-/* Page Layout */
 .dashboard-content {
     padding: 32px;
     background: #e5e7eb;
@@ -633,7 +653,6 @@ nav ul li a:hover {
     align-items: center;
 }
 
-/* User Menu (Header Dropdown) */
 .user-menu {
     display: flex;
     align-items: center;
@@ -656,7 +675,6 @@ nav ul li a:hover {
     object-fit: cover;
 }
 
-/* Dropdown Menu Improvements */
 nav .dropdown {
     position: relative;
 }
@@ -685,7 +703,6 @@ nav .dropdown-item:hover {
     background: #f3f4f6;
 }
 
-/* Activity Items */
 .activity-item {
     display: flex;
     align-items: flex-start;
@@ -731,7 +748,6 @@ nav .dropdown-item:hover {
     white-space: nowrap;
 }
 
-/* Responsive Adjustments */
 @media (max-width: 768px) {
     .chat-container {
         flex-direction: column;

@@ -66,7 +66,7 @@ function handleUpload($conn, $userId)
     }
 
     $file = $_FILES['document'];
-    $maxSize = 10 * 1024 * 1024; // 10 MB
+    $maxSize = 10 * 1024 * 1024;
     if ($file['size'] > $maxSize) {
         http_response_code(400);
         echo json_encode(['success' => false, 'error' => 'Fichier trop volumineux (10MB maximum)']);

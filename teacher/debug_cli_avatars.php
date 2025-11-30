@@ -3,7 +3,6 @@ require_once __DIR__ . '/../config/config.php';
 
 echo "--- Diagnostic Avatars ---\n";
 
-// Get users with avatars, ordered by ID desc (likely most recent)
 $stmt = $conn->query("SELECT id, role, nom, prenom, photo_url FROM users WHERE photo_url IS NOT NULL ORDER BY id DESC LIMIT 5");
 $users = $stmt->fetchAll(PDO::FETCH_ASSOC);
 

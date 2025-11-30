@@ -9,7 +9,6 @@ $userId = $_SESSION['user_id'] ?? null;
 $pageTitle = 'Espace enseignant';
 $currentNav = 'teacher_home';
 
-// Récupération des statistiques
 $stats = get_teacher_stats($userId, $conn);
 $upcomingSessions = get_teacher_upcoming_sessions($userId, $conn, 3);
 $availableSlots = get_teacher_available_slots($userId, $conn, 3);

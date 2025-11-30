@@ -408,7 +408,6 @@ try {
                 }
             });
 
-            // carte simple
             document.addEventListener('DOMContentLoaded', function() {
                 if (typeof L !== 'undefined' && document.getElementById('map')) {
                     var map = L.map('map').setView([48.8566, 2.3522], 12);

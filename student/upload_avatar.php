@@ -64,7 +64,7 @@ if (!isset($allowedTypes[$type])) {
     exit;
 }
 
-if ($size > 2 * 1024 * 1024) { // 2 Mo
+if ($size > 2 * 1024 * 1024) {
     $_SESSION['success_message'] = 'Avatar trop volumineux (2 Mo max).';
     header('Location: settings.php');
     exit;

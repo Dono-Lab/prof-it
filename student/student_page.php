@@ -9,7 +9,6 @@ $userId = $_SESSION['user_id'] ?? null;
 $pageTitle = 'Espace étudiant';
 $currentNav = 'student_home';
 
-// Récupération des statistiques
 $stats = get_student_stats($userId, $conn);
 $upcomingCourses = get_student_upcoming_courses($userId, $conn, 3);
 $hasUpcomingCourses = !empty($upcomingCourses);
@@ -29,28 +28,6 @@ $profileCompletion = get_profile_completion($userId, $conn);
 </head>
 
 <body>
-    <?php require __DIR__ . '/../templates/header.php'; ?>
-
-    <div class="dashboard-content">
-        <div class="container-fluid">
-            <h1 class="page-title">
-                <i class="fas fa-home me-2"></i>
-                Bienvenue, <?= htmlspecialchars(ucfirst($prenom), ENT_QUOTES, 'UTF-8') ?>
-            </h1>
-
-            <!-- Statistiques -->
-            <div class="row row-cols-xl-4 row-cols-md-2 row-cols-1 g-3 mb-4 justify-content-center stats-row">
-                <div class="col d-flex">
-                    <div class="stat-card w-100 h-100">
-                        <div class="stat-icon blue">
-                            <i class="fas fa-graduation-cap"></i>
-                        </div>
-                        <div>
-                            <h3 class="mb-0" id="stat-courses"><?= $stats['cours_termines'] ?></h3>
-                            <p class="text-muted small mb-0">Cours terminés</p>
-                        </div>
-                    </div>
-                </div>
 
                 <div class="col d-flex">
                     <div class="stat-card w-100 h-100">
@@ -78,7 +55,6 @@ $profileCompletion = get_profile_completion($userId, $conn);
             </div>
 
             <div class="row">
-                <!-- Prochaines réservations -->
                 <div class="col-lg-8 mb-4">
                     <div class="card-custom">
                         <div class="card-header-custom">
@@ -150,7 +126,6 @@ $profileCompletion = get_profile_completion($userId, $conn);
                     </div>
                 </div>
 
-                <!-- Complétion du profil -->
                 <div class="col-lg-4 mb-4">
                     <div class="card-custom">
                         <div class="card-header-custom">
@@ -190,7 +165,6 @@ $profileCompletion = get_profile_completion($userId, $conn);
                         </div>
                     </div>
 
-                    <!-- Raccourcis -->
                     <div class="card-custom mt-4">
                         <div class="card-header-custom">
                             <h5><i class="fas fa-bolt me-2"></i>Accès rapide</h5>
